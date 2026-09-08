@@ -137,6 +137,8 @@ export default function ManajemenPegawai({ callApi, opdId, onKembali }) {
         nip,
       });
 
+      console.log("HASIL TAMBAH PEGAWAI:", result);
+
       if (result?.status === "berhasil") {
         setShowTambah(false);
 
@@ -147,6 +149,7 @@ export default function ManajemenPegawai({ callApi, opdId, onKembali }) {
         await fetchPegawai();
       } else {
         alert(result?.message || "Gagal menambahkan pegawai.");
+        console.log("gagas TAMBAH PEGAWAI:", result);
       }
     } catch (error) {
       console.error("handleTambahPegawai:", error);
@@ -184,11 +187,21 @@ export default function ManajemenPegawai({ callApi, opdId, onKembali }) {
     setSavingEdit(true);
 
     try {
-      const result = await callApi("updatePegawai", {
+      console.log("DATA EDIT:", {
+        opdId,
         username,
         nama,
         nip,
       });
+
+      const result = await callApi("updatePegawai", {
+        opdId,
+        username,
+        nama,
+        nip,
+      });
+
+      console.log("HASIL UPDATE PEGAWAI:", result);
 
       if (result?.status === "berhasil") {
         setPegawaiList((prev) =>

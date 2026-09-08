@@ -14,7 +14,17 @@ export async function callApi(action, data = {}) {
       }),
     });
 
-    return await response.json();
+    const result = await response.json();
+
+    if (typeof result === "string") {
+      try {
+        return JSON.parse(result);
+      } catch (error) {
+        return result;
+      }
+    }
+
+    return result;
   } catch (error) {
     console.error("API Error:", error);
 
