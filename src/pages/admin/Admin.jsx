@@ -21,7 +21,7 @@ function SesiRow({ label, mulai, selesai, onUbah }) {
       <div>
         <p className="text-sm font-semibold text-slate-700">{label}</p>
 
-        <p className="text-xs text-slate-500 mt-1">
+        <p className="mt-1 text-xs text-slate-500">
           {menitKeJam(mulai)} - {menitKeJam(selesai)}
         </p>
       </div>
@@ -49,13 +49,17 @@ function SesiRow({ label, mulai, selesai, onUbah }) {
   );
 }
 
-export default function Admin({ onLogout, onManajemenPegawai }) {
+export default function Admin({ opdId, onLogout, onManajemenPegawai }) {
   const [absensiList, setAbsensiList] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [radius, setRadius] = useState("");
-  const [koordinatKantor, setKoordinatKantor] = useState(null);
 
+  const [namaOpd, setNamaOpd] = useState("");
+  const [savingNamaOpd, setSavingNamaOpd] = useState(false);
+
+  const [koordinatKantor, setKoordinatKantor] = useState(null);
+  const [halaman, setHalaman] = useState("dashboard");
   const [showPeta, setShowPeta] = useState(false);
 
   const [jamSesi, setJamSesi] = useState({
@@ -107,7 +111,7 @@ export default function Admin({ onLogout, onManajemenPegawai }) {
 
   const fetchConfig = async () => {
     try {
-      const result = await callApi("getConfig", {});
+      const result = await callApi("getConfig", { opdId });
 
       if (!result) return;
 
@@ -120,6 +124,11 @@ export default function Admin({ onLogout, onManajemenPegawai }) {
           latitude: parseFloat(result.kantorLat),
           longitude: parseFloat(result.kantorLng),
         });
+      }
+
+      if (result.nama_opd) {
+        console.log("NAMA OPD:", result.nama_opd);
+        setNamaOpd(String(result.nama_opd));
       }
 
       setJamSesi({
@@ -157,9 +166,11 @@ export default function Admin({ onLogout, onManajemenPegawai }) {
   };
 
   useEffect(() => {
+    if (!opdId) return;
+
     fetchAbsensiAdmin();
     fetchConfig();
-  }, []);
+  }, [opdId]);
 
   const handleSimpanRadius = async () => {
     const nilaiRadius = parseFloat(radius);
@@ -179,6 +190,7 @@ export default function Admin({ onLogout, onManajemenPegawai }) {
 
     try {
       const result = await callApi("updateConfig", {
+        opdId,
         key: "radius",
         value: nilaiRadius,
       });
@@ -193,6 +205,50 @@ export default function Admin({ onLogout, onManajemenPegawai }) {
       alert("Terjadi kesalahan saat menyimpan radius.");
     } finally {
       setSavingRadius(false);
+    }
+  };
+
+  const handleSimpanNamaOpd = async () => {
+    const nama = namaOpd.trim();
+
+    if (!nama) {
+      alert("Nama instansi tidak boleh kosong.");
+      return;
+    }
+
+    if (nama.length < 3) {
+      alert("Nama instansi terlalu pendek.");
+      return;
+    }
+
+    const konfirmasi = window.confirm(
+      `Simpan nama instansi menjadi:\n\n${nama}?`,
+    );
+
+    if (!konfirmasi) return;
+
+    setSavingNamaOpd(true);
+
+    try {
+      const result = await callApi("updateConfig", {
+        opdId,
+        key: "nama_opd",
+        value: nama,
+      });
+
+      if (result?.status === "berhasil") {
+        setNamaOpd(nama);
+
+        alert("Nama instansi berhasil diperbarui.");
+      } else {
+        alert(result?.error || "Gagal mengubah nama instansi.");
+      }
+    } catch (error) {
+      console.error("Gagal menyimpan nama instansi:", error);
+
+      alert("Terjadi kesalahan saat menyimpan nama instansi.");
+    } finally {
+      setSavingNamaOpd(false);
     }
   };
 
@@ -220,11 +276,13 @@ export default function Admin({ onLogout, onManajemenPegawai }) {
 
     try {
       const r1 = await callApi("updateConfig", {
+        opdId,
         key: modalSesi.keyMulai,
         value: mulai,
       });
 
       const r2 = await callApi("updateConfig", {
+        opdId,
         key: modalSesi.keySelesai,
         value: selesai,
       });
@@ -265,11 +323,13 @@ export default function Admin({ onLogout, onManajemenPegawai }) {
 
     try {
       const r1 = await callApi("updateConfig", {
+        opdId,
         key: "kantorLat",
         value: koordinatBaru.latitude,
       });
 
       const r2 = await callApi("updateConfig", {
+        opdId,
         key: "kantorLng",
         value: koordinatBaru.longitude,
       });
@@ -300,34 +360,62 @@ export default function Admin({ onLogout, onManajemenPegawai }) {
     <div className="min-h-screen bg-slate-100">
       <div className="mx-auto w-full max-w-[1200px] px-4 py-6 md:px-6">
         {/* HEADER */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-5">
-          <h1 className="text-xl md:text-2xl font-bold text-slate-800">
+        <div className="p-5 mb-5 bg-white border shadow-sm rounded-2xl border-slate-200">
+          <h1 className="text-xl font-bold md:text-2xl text-slate-800">
             Dashboard Admin
           </h1>
 
-          <p className="text-sm text-slate-500 mt-1">
-            Sistem Absensi PPPK Inspektorat
+          <p className="mt-1 text-sm text-slate-500">
+            Sistem Absensi PPPK {namaOpd || "Instansi"}
           </p>
+        </div>
+
+        {/* IDENTITAS INSTANSI */}
+        <div className="p-5 mb-5 bg-white border shadow-sm rounded-2xl border-slate-200">
+          <h2 className="text-base font-bold text-slate-800">
+            🏢 Identitas Instansi
+          </h2>
+
+          <p className="mt-1 mb-4 text-xs text-slate-500">
+            Nama instansi yang digunakan pada aplikasi.
+          </p>
+
+          <input
+            type="text"
+            value={namaOpd}
+            onChange={(e) => setNamaOpd(e.target.value)}
+            placeholder="Contoh: Inspektorat Daerah Kabupaten Kepulauan Sangihe"
+            className="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 mb-3"
+          />
+
+          <button
+            type="button"
+            onClick={handleSimpanNamaOpd}
+            disabled={savingNamaOpd}
+            className="w-full py-3 text-sm font-bold text-white transition bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-xl"
+          >
+            {savingNamaOpd ? "Menyimpan..." : "💾 Simpan Nama Instansi"}
+          </button>
         </div>
 
         {/* STATISTIK */}
         <div className="grid grid-cols-2 gap-4 mb-5">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+          <div className="p-5 bg-white border shadow-sm rounded-2xl border-slate-200">
             <p className="text-3xl font-bold text-blue-600">{totalAbsen}</p>
 
-            <p className="text-xs text-slate-500 mt-1">Absen Hari Ini</p>
+            <p className="mt-1 text-xs text-slate-500">Absen Hari Ini</p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+          <div className="p-5 bg-white border shadow-sm rounded-2xl border-slate-200">
             <p className="text-3xl font-bold text-green-600">{totalApproved}</p>
 
-            <p className="text-xs text-slate-500 mt-1">Approved</p>
+            <p className="mt-1 text-xs text-slate-500">Approved</p>
           </div>
         </div>
 
         {/* ABSENSI HARI INI */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-5">
-          <div className="flex items-center justify-between mb-3 pb-3 border-b border-slate-100">
+        <div className="p-5 mb-5 bg-white border shadow-sm rounded-2xl border-slate-200">
+          <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
             <h2 className="text-base font-bold text-slate-800">
               Absensi Hari Ini
             </h2>
@@ -336,13 +424,7 @@ export default function Admin({ onLogout, onManajemenPegawai }) {
               type="button"
               onClick={fetchAbsensiAdmin}
               disabled={loading}
-              className="
-                text-xs
-                font-semibold
-                text-blue-600
-                hover:text-blue-700
-                disabled:opacity-50
-              "
+              className="text-xs font-semibold text-blue-600 hover:text-blue-700 disabled:opacity-50"
             >
               {loading ? "Memuat..." : "↻ Refresh"}
             </button>
@@ -350,12 +432,12 @@ export default function Admin({ onLogout, onManajemenPegawai }) {
 
           {loading && absensiList.length === 0 ? (
             <div className="py-8 text-center">
-              <div className="w-7 h-7 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" />
+              <div className="mx-auto border-4 border-blue-200 rounded-full w-7 h-7 border-t-blue-600 animate-spin" />
 
-              <p className="text-xs text-slate-500 mt-3">Memuat data...</p>
+              <p className="mt-3 text-xs text-slate-500">Memuat data...</p>
             </div>
           ) : absensiList.length === 0 ? (
-            <p className="text-sm text-center text-slate-400 py-8">
+            <p className="py-8 text-sm text-center text-slate-400">
               Belum ada absensi hari ini
             </p>
           ) : (
@@ -378,23 +460,14 @@ export default function Admin({ onLogout, onManajemenPegawai }) {
                 return (
                   <div
                     key={index}
-                    className="
-                        flex
-                        items-center
-                        justify-between
-                        gap-3
-                        py-3
-                        border-b
-                        border-slate-100
-                        last:border-b-0
-                      "
+                    className="flex items-center justify-between gap-3 py-3 border-b border-slate-100 last:border-b-0"
                   >
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-700 truncate">
+                      <p className="text-sm font-semibold truncate text-slate-700">
                         {item[1]}
                       </p>
 
-                      <p className="text-xs text-slate-500 mt-1">
+                      <p className="mt-1 text-xs text-slate-500">
                         {tanggalText}, {jam} • Sesi: {item[2]}
                       </p>
                     </div>
@@ -416,12 +489,12 @@ export default function Admin({ onLogout, onManajemenPegawai }) {
         </div>
 
         {/* RADIUS */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-5">
+        <div className="p-5 mb-5 bg-white border shadow-sm rounded-2xl border-slate-200">
           <h2 className="text-base font-bold text-slate-800">
             ⚙️ Pengaturan Radius
           </h2>
 
-          <p className="text-xs text-slate-500 mt-1 mb-4">
+          <p className="mt-1 mb-4 text-xs text-slate-500">
             Atur jarak maksimal pegawai dari titik kantor untuk dapat melakukan
             absen.
           </p>
@@ -456,35 +529,24 @@ export default function Admin({ onLogout, onManajemenPegawai }) {
             type="button"
             onClick={handleSimpanRadius}
             disabled={savingRadius}
-            className="
-              w-full
-              bg-blue-600
-              hover:bg-blue-700
-              disabled:opacity-60
-              text-white
-              rounded-xl
-              py-3
-              text-sm
-              font-bold
-              transition
-            "
+            className="w-full py-3 text-sm font-bold text-white transition bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-xl"
           >
             {savingRadius ? "Menyimpan..." : "💾 Simpan Radius"}
           </button>
         </div>
 
         {/* LOKASI */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-5">
+        <div className="p-5 mb-5 bg-white border shadow-sm rounded-2xl border-slate-200">
           <h2 className="text-base font-bold text-slate-800">
             📍 Titik Lokasi Kantor
           </h2>
 
-          <p className="text-xs text-slate-500 mt-1 mb-4">
+          <p className="mt-1 mb-4 text-xs text-slate-500">
             Atur titik koordinat kantor sebagai pusat radius absensi.
           </p>
 
           {koordinatKantor ? (
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-3">
+            <div className="p-3 mb-3 border bg-slate-50 border-slate-200 rounded-xl">
               <p className="text-xs text-slate-600">
                 Lat:{" "}
                 <span className="font-semibold">
@@ -492,7 +554,7 @@ export default function Admin({ onLogout, onManajemenPegawai }) {
                 </span>
               </p>
 
-              <p className="text-xs text-slate-600 mt-1">
+              <p className="mt-1 text-xs text-slate-600">
                 Lng:{" "}
                 <span className="font-semibold">
                   {koordinatKantor.longitude.toFixed(7)}
@@ -500,7 +562,7 @@ export default function Admin({ onLogout, onManajemenPegawai }) {
               </p>
             </div>
           ) : (
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-3">
+            <div className="p-3 mb-3 border bg-slate-50 border-slate-200 rounded-xl">
               <p className="text-xs text-slate-400">
                 Koordinat kantor belum tersedia.
               </p>
@@ -510,35 +572,25 @@ export default function Admin({ onLogout, onManajemenPegawai }) {
           <button
             type="button"
             onClick={() => setShowPeta(true)}
-            className="
-              w-full
-              bg-blue-600
-              hover:bg-blue-700
-              text-white
-              rounded-xl
-              py-3
-              text-sm
-              font-bold
-              transition
-            "
+            className="w-full py-3 text-sm font-bold text-white transition bg-blue-600 hover:bg-blue-700 rounded-xl"
           >
             🗺️ Pilih di Peta
           </button>
         </div>
 
         {/* JAM SESI */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-5">
-          <h2 className="text-base font-bold text-slate-800 mb-4">
+        <div className="p-5 mb-5 bg-white border shadow-sm rounded-2xl border-slate-200">
+          <h2 className="mb-4 text-base font-bold text-slate-800">
             🕐 Pengaturan Jam Sesi
           </h2>
 
           {savingJam && (
-            <p className="text-xs text-blue-600 mb-3">
+            <p className="mb-3 text-xs text-blue-600">
               Menyimpan perubahan jam...
             </p>
           )}
 
-          <h3 className="text-sm font-bold text-blue-600 mb-2">
+          <h3 className="mb-2 text-sm font-bold text-blue-600">
             Senin - Kamis
           </h3>
 
@@ -584,7 +636,7 @@ export default function Admin({ onLogout, onManajemenPegawai }) {
             }
           />
 
-          <h3 className="text-sm font-bold text-blue-600 mt-5 mb-2">Jumat</h3>
+          <h3 className="mt-5 mb-2 text-sm font-bold text-blue-600">Jumat</h3>
 
           <SesiRow
             label="Masuk"
@@ -630,26 +682,13 @@ export default function Admin({ onLogout, onManajemenPegawai }) {
         </div>
 
         {/* AKSI */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-5">
-          <h2 className="text-base font-bold text-slate-800 mb-4">Aksi</h2>
+        <div className="p-5 mb-5 bg-white border shadow-sm rounded-2xl border-slate-200">
+          <h2 className="mb-4 text-base font-bold text-slate-800">Aksi</h2>
 
           <button
             type="button"
             onClick={onManajemenPegawai}
-            className="
-              w-full
-              bg-green-50
-              hover:bg-green-100
-              border
-              border-green-200
-              text-green-700
-              rounded-xl
-              py-3
-              text-sm
-              font-bold
-              transition
-              mb-3
-            "
+            className="w-full py-3 mb-3 text-sm font-bold text-green-700 transition border border-green-200 bg-green-50 hover:bg-green-100 rounded-xl"
           >
             👥 Manajemen Pegawai
           </button>
@@ -661,18 +700,7 @@ export default function Admin({ onLogout, onManajemenPegawai }) {
                 "Fitur export akan kita sambungkan setelah halaman Admin selesai.",
               )
             }
-            className="
-              w-full
-              bg-blue-600
-              hover:bg-blue-700
-              text-white
-              rounded-xl
-              py-3
-              text-sm
-              font-bold
-              transition
-              mb-3
-            "
+            className="w-full py-3 mb-3 text-sm font-bold text-white transition bg-blue-600 hover:bg-blue-700 rounded-xl"
           >
             📊 Export Rekap Bulan Ini
           </button>
@@ -680,17 +708,7 @@ export default function Admin({ onLogout, onManajemenPegawai }) {
           <button
             type="button"
             onClick={onLogout}
-            className="
-              w-full
-              bg-slate-100
-              hover:bg-slate-200
-              text-red-600
-              rounded-xl
-              py-3
-              text-sm
-              font-bold
-              transition
-            "
+            className="w-full py-3 text-sm font-bold text-red-600 transition bg-slate-100 hover:bg-slate-200 rounded-xl"
           >
             Logout
           </button>

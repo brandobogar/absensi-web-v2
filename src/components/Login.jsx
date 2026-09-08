@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import logoDaerah from "../assets/logo-daerah.png";
 import { callApi } from "../api";
 
@@ -6,6 +6,32 @@ function Login({ onLoginSuccess }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const [namaOpd, setNamaOpd] = useState("Instansi");
+  const [loadingConfig, setLoadingConfig] = useState(true);
+
+  // =========================
+  // AMBIL CONFIG
+  // =========================
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const result = await callApi("getConfig", {});
+
+        console.log("CONFIG LOGIN:", result);
+
+        if (result?.nama_opd) {
+          setNamaOpd(String(result.nama_opd));
+        }
+      } catch (error) {
+        console.error("Gagal memuat konfigurasi:", error);
+      } finally {
+        setLoadingConfig(false);
+      }
+    };
+
+    fetchConfig();
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -19,28 +45,29 @@ function Login({ onLoginSuccess }) {
 
     try {
       // =========================
-      // LOGIN ADMIN
+      // COBA LOGIN ADMIN
       // =========================
-      if (username.toLowerCase() === "admin") {
-        const result = await callApi("loginAdmin", {
-          username,
-          password,
-        });
+      const adminResult = await callApi("loginAdmin", {
+        username,
+        password,
+      });
 
-        if (result?.status === true) {
-          onLoginSuccess({
-            nama: "Administrator",
-            role: "admin",
-          });
-        } else {
-          alert("Username atau password admin salah!");
-        }
+      console.log("HASIL LOGIN ADMIN:", adminResult);
+
+      if (adminResult?.status === "berhasil") {
+        onLoginSuccess({
+          username: adminResult.username,
+          nama: "Administrator",
+          role: adminResult.role,
+          opd_id: adminResult.opd_id,
+        });
 
         return;
       }
 
       // =========================
-      // LOGIN PEGAWAI
+      // JIKA BUKAN ADMIN
+      // COBA LOGIN PEGAWAI
       // =========================
       const result = await callApi("loginPegawai", {
         username,
@@ -52,7 +79,7 @@ function Login({ onLoginSuccess }) {
       if (result?.status === "nonaktif") {
         alert(
           result.message ||
-            "Akun Anda sedang dinonaktifkan. Silakan hubungi administrator."
+            "Akun Anda sedang dinonaktifkan. Silakan hubungi administrator.",
         );
       } else if (result?.nama) {
         onLoginSuccess(result);
@@ -68,42 +95,37 @@ function Login({ onLoginSuccess }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center px-4">
+    <div className="flex items-center justify-center min-h-screen px-4 bg-slate-100">
       {/* MOBILE CONTAINER */}
       <div className="w-full max-w-[430px]">
-
         {/* LOGIN CARD */}
-        <div className="bg-white rounded-3xl shadow-lg px-6 py-8 sm:px-8">
-
+        <div className="px-6 py-8 bg-white shadow-lg rounded-3xl sm:px-8">
           {/* LOGO */}
           <div className="flex justify-center mb-5">
-            <div className="w-24 h-24 flex items-center justify-center">
+            <div className="flex items-center justify-center w-24 h-24">
               <img
                 src={logoDaerah}
-                alt="Logo Kabupaten Kepulauan Sangihe"
-                className="w-full h-full object-contain"
+                alt={`Logo ${namaOpd}`}
+                className="object-contain w-full h-full"
               />
             </div>
           </div>
 
           {/* TITLE */}
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-slate-800">
-              Absensi PPPK
-            </h1>
+          <div className="mb-8 text-center">
+            <h1 className="text-2xl font-bold text-slate-800">Absensi PPPK</h1>
 
-            <p className="text-sm text-slate-500 mt-1">
-              Inspektorat Kabupaten Sangihe
+            <p className="mt-1 text-sm text-slate-500">
+              {loadingConfig ? "Memuat..." : namaOpd}
             </p>
           </div>
 
           <form onSubmit={handleLogin}>
-
             {/* USERNAME */}
             <div className="mb-5">
               <label
                 htmlFor="username"
-                className="block text-sm font-semibold text-slate-700 mb-2"
+                className="block mb-2 text-sm font-semibold text-slate-700"
               >
                 Username
               </label>
@@ -144,7 +166,7 @@ function Login({ onLoginSuccess }) {
             <div className="mb-6">
               <label
                 htmlFor="password"
-                className="block text-sm font-semibold text-slate-700 mb-2"
+                className="block mb-2 text-sm font-semibold text-slate-700"
               >
                 Password
               </label>
@@ -205,8 +227,8 @@ function Login({ onLoginSuccess }) {
         </div>
 
         {/* FOOTER */}
-        <p className="text-center text-xs text-slate-400 mt-5 px-4">
-          Sistem Absensi Inspektorat Kabupaten Sangihe
+        <p className="px-4 mt-5 text-xs text-center text-slate-400">
+          Sistem Absensi {namaOpd}
         </p>
       </div>
     </div>
@@ -214,4 +236,3 @@ function Login({ onLoginSuccess }) {
 }
 
 export default Login;
-
