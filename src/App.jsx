@@ -1,17 +1,24 @@
 import { useEffect, useState } from "react";
+
 import { callApi } from "./api";
 
 import Riwayat from "./pages/user/Riwayat";
+
 import Login from "./components/Login";
+
 import UserLayout from "./layouts/UserLayout";
+
 import Beranda from "./pages/user/Beranda";
+
 import Absen from "./pages/user/Absen";
 
 import Admin from "./pages/admin/Admin";
+
 import ManajemenPegawai from "./pages/admin/ManajemenPegawai";
 
 function App() {
   const [userData, setUserData] = useState(null);
+
   const [isAdmin, setIsAdmin] = useState(false);
 
   const [activeTab, setActiveTab] = useState("beranda");
@@ -23,6 +30,11 @@ function App() {
 
   // Digunakan untuk memicu refresh status absensi di Beranda
   const [refreshBeranda, setRefreshBeranda] = useState(0);
+
+  // =========================
+  // OPD YANG SEDANG DIPILIH
+  // =========================
+  const [selectedOpdId, setSelectedOpdId] = useState(null);
 
   // =========================
   // LOAD SESSION
@@ -38,6 +50,9 @@ function App() {
 
           setUserData(parsedUser);
           setIsAdmin(savedIsAdmin === "true");
+
+          // Default OPD sesuai akun
+          setSelectedOpdId(parsedUser?.opd_id || null);
         }
       } catch (error) {
         console.error("Gagal memuat sesi:", error);
@@ -56,17 +71,27 @@ function App() {
   // LOGIN BERHASIL
   // =========================
   const handleLoginSuccess = (data) => {
+    const role = String(data?.role || "")
+      .trim()
+      .toLowerCase();
+
     const adminStatus =
-      data?.role === "admin" ||
-      data?.role === "super_admin" ||
-      data?.role === "admin_kepegawaian" ||
-      data?.role === "admin_monitoring";
+      role === "admin" ||
+      role === "superadmin" ||
+      role === "super_admin" ||
+      role === "admin_kepegawaian" ||
+      role === "admin_monitoring";
 
     setUserData(data);
+
     setIsAdmin(adminStatus);
+
+    // OPD awal
+    setSelectedOpdId(data?.opd_id || null);
 
     // Setelah login, mulai dari halaman utama
     setActiveTab("beranda");
+
     setAdminPage("dashboard");
 
     try {
@@ -91,6 +116,7 @@ function App() {
 
     setUserData(null);
     setIsAdmin(false);
+    setSelectedOpdId(null);
     setActiveTab("beranda");
     setAdminPage("dashboard");
   };
@@ -99,10 +125,8 @@ function App() {
   // ABSEN BERHASIL
   // =========================
   const handleAbsenSuccess = () => {
-    // Kembali ke Beranda
     setActiveTab("beranda");
 
-    // Memicu Beranda mengambil status terbaru
     setRefreshBeranda((prev) => prev + 1);
   };
 
@@ -145,8 +169,16 @@ function App() {
   // ADMIN
   // =========================
   if (isAdmin) {
-    // Pastikan admin mempunyai opd_id
-    const opdId = userData?.opd_id;
+    const role = String(userData?.role || "")
+      .trim()
+      .toLowerCase();
+
+    const isSuperAdmin = role === "superadmin" || role === "super_admin";
+
+    // =========================
+    // OPD ADMIN
+    // =========================
+    const opdId = isSuperAdmin ? selectedOpdId : userData?.opd_id;
 
     // -------------------------
     // HALAMAN MANAJEMEN PEGAWAI
@@ -156,6 +188,10 @@ function App() {
         <ManajemenPegawai
           callApi={callApi}
           opdId={opdId}
+          role={role}
+          isSuperAdmin={isSuperAdmin}
+          selectedOpdId={selectedOpdId}
+          setSelectedOpdId={setSelectedOpdId}
           onKembali={() => setAdminPage("dashboard")}
         />
       );
@@ -167,6 +203,10 @@ function App() {
     return (
       <Admin
         opdId={opdId}
+        role={role}
+        isSuperAdmin={isSuperAdmin}
+        selectedOpdId={selectedOpdId}
+        setSelectedOpdId={setSelectedOpdId}
         onLogout={handleLogout}
         onManajemenPegawai={() => setAdminPage("pegawai")}
       />

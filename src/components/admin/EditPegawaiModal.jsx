@@ -9,12 +9,13 @@ export default function EditPegawaiModal({
 }) {
   const [nama, setNama] = useState("");
   const [nip, setNip] = useState("");
-
+  const [password, setPassword] = useState("");
   // Isi form setiap kali pegawai yang diedit berubah
   useEffect(() => {
     if (pegawai) {
       setNama(String(pegawai.nama || ""));
       setNip(String(pegawai.nip || ""));
+      setPassword("");
     }
   }, [pegawai]);
 
@@ -31,6 +32,7 @@ export default function EditPegawaiModal({
       username: pegawai.username,
       nama: namaBersih,
       nip: nipBersih,
+      password: password.trim(),
     });
   };
 
@@ -90,6 +92,26 @@ export default function EditPegawaiModal({
             disabled={saving}
             className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-3 text-sm text-gray-800 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
           />
+        </div>
+
+        {/* PASSWORD */}
+        <div className="mb-4">
+          <label className="mb-1.5 block text-sm font-medium text-gray-700">
+            Password Baru
+          </label>
+
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Kosongkan jika tidak ingin mengubah"
+            disabled={saving}
+            className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-3 text-sm text-gray-800 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+          />
+
+          <p className="mt-1.5 text-xs text-gray-400">
+            Kosongkan jika password tidak ingin diubah.
+          </p>
         </div>
 
         {/* USERNAME */}

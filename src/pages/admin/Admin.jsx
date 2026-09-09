@@ -49,15 +49,23 @@ function SesiRow({ label, mulai, selesai, onUbah }) {
   );
 }
 
-export default function Admin({ opdId, onLogout, onManajemenPegawai }) {
+export default function Admin({
+  opdId,
+  role,
+  isSuperAdmin,
+  selectedOpdId,
+  setSelectedOpdId,
+  onLogout,
+  onManajemenPegawai,
+}) {
   const [absensiList, setAbsensiList] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [radius, setRadius] = useState("");
 
   const [namaOpd, setNamaOpd] = useState("");
-  const [savingNamaOpd, setSavingNamaOpd] = useState(false);
-
+  const [daftarOpd, setDaftarOpd] = useState([]);
+  const [loadingOpd, setLoadingOpd] = useState(false);
   const [koordinatKantor, setKoordinatKantor] = useState(null);
   const [halaman, setHalaman] = useState("dashboard");
   const [showPeta, setShowPeta] = useState(false);
@@ -106,6 +114,35 @@ export default function Admin({ opdId, onLogout, onManajemenPegawai }) {
       setAbsensiList([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDaftarOpd = async () => {
+    if (!isSuperAdmin) return;
+
+    setLoadingOpd(true);
+
+    try {
+      const result = await callApi("getDaftarOpd");
+
+      console.log("DAFTAR OPD:", result);
+
+      if (Array.isArray(result)) {
+        setDaftarOpd(result);
+
+        // Kalau belum ada OPD yang dipilih,
+        // gunakan OPD pertama
+        if (!selectedOpdId && result.length > 0) {
+          setSelectedOpdId(result[0].opd_id);
+        }
+      } else {
+        setDaftarOpd([]);
+      }
+    } catch (error) {
+      console.error("Gagal memuat daftar OPD:", error);
+      setDaftarOpd([]);
+    } finally {
+      setLoadingOpd(false);
     }
   };
 
@@ -166,6 +203,10 @@ export default function Admin({ opdId, onLogout, onManajemenPegawai }) {
   };
 
   useEffect(() => {
+    fetchDaftarOpd();
+  }, [isSuperAdmin]);
+
+  useEffect(() => {
     if (!opdId) return;
 
     fetchAbsensiAdmin();
@@ -205,50 +246,6 @@ export default function Admin({ opdId, onLogout, onManajemenPegawai }) {
       alert("Terjadi kesalahan saat menyimpan radius.");
     } finally {
       setSavingRadius(false);
-    }
-  };
-
-  const handleSimpanNamaOpd = async () => {
-    const nama = namaOpd.trim();
-
-    if (!nama) {
-      alert("Nama instansi tidak boleh kosong.");
-      return;
-    }
-
-    if (nama.length < 3) {
-      alert("Nama instansi terlalu pendek.");
-      return;
-    }
-
-    const konfirmasi = window.confirm(
-      `Simpan nama instansi menjadi:\n\n${nama}?`,
-    );
-
-    if (!konfirmasi) return;
-
-    setSavingNamaOpd(true);
-
-    try {
-      const result = await callApi("updateConfig", {
-        opdId,
-        key: "nama_opd",
-        value: nama,
-      });
-
-      if (result?.status === "berhasil") {
-        setNamaOpd(nama);
-
-        alert("Nama instansi berhasil diperbarui.");
-      } else {
-        alert(result?.error || "Gagal mengubah nama instansi.");
-      }
-    } catch (error) {
-      console.error("Gagal menyimpan nama instansi:", error);
-
-      alert("Terjadi kesalahan saat menyimpan nama instansi.");
-    } finally {
-      setSavingNamaOpd(false);
     }
   };
 
@@ -370,6 +367,40 @@ export default function Admin({ opdId, onLogout, onManajemenPegawai }) {
           </p>
         </div>
 
+        {/* PILIH OPD - KHUSUS SUPERADMIN */}
+        {isSuperAdmin && (
+          <div className="p-5 mb-5 bg-white border shadow-sm rounded-2xl border-slate-200">
+            <h2 className="text-base font-bold text-slate-800">
+              🔐 Pilih Instansi
+            </h2>
+
+            <p className="mt-1 mb-4 text-xs text-slate-500">
+              Superadmin dapat memilih OPD yang ingin dikelola.
+            </p>
+
+            <select
+              value={selectedOpdId || ""}
+              onChange={(e) => setSelectedOpdId(e.target.value)}
+              disabled={loadingOpd}
+              className="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              {loadingOpd ? (
+                <option value="">Memuat daftar OPD...</option>
+              ) : (
+                <>
+                  <option value="">-- Pilih Instansi --</option>
+
+                  {daftarOpd.map((opd) => (
+                    <option key={opd.opd_id} value={opd.opd_id}>
+                      {opd.nama_opd} ({opd.opd_id})
+                    </option>
+                  ))}
+                </>
+              )}
+            </select>
+          </div>
+        )}
+
         {/* IDENTITAS INSTANSI */}
         <div className="p-5 mb-5 bg-white border shadow-sm rounded-2xl border-slate-200">
           <h2 className="text-base font-bold text-slate-800">
@@ -377,25 +408,18 @@ export default function Admin({ opdId, onLogout, onManajemenPegawai }) {
           </h2>
 
           <p className="mt-1 mb-4 text-xs text-slate-500">
-            Nama instansi yang digunakan pada aplikasi.
+            Instansi yang digunakan oleh akun administrator ini.
           </p>
 
-          <input
-            type="text"
-            value={namaOpd}
-            onChange={(e) => setNamaOpd(e.target.value)}
-            placeholder="Contoh: Inspektorat Daerah Kabupaten Kepulauan Sangihe"
-            className="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 mb-3"
-          />
+          <div className="p-3 border bg-slate-50 border-slate-200 rounded-xl">
+            <p className="text-sm font-semibold text-slate-700">
+              {namaOpd || "Memuat nama instansi..."}
+            </p>
 
-          <button
-            type="button"
-            onClick={handleSimpanNamaOpd}
-            disabled={savingNamaOpd}
-            className="w-full py-3 text-sm font-bold text-white transition bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-xl"
-          >
-            {savingNamaOpd ? "Menyimpan..." : "💾 Simpan Nama Instansi"}
-          </button>
+            <p className="mt-1 text-xs text-slate-500">
+              OPD ID: {opdId || "-"}
+            </p>
+          </div>
         </div>
 
         {/* STATISTIK */}

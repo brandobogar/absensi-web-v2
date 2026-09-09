@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import EditPegawaiModal from "../../components/admin/EditPegawaiModal";
 import TambahPegawaiModal from "../../components/admin/TambahPegawaiModal";
 
-export default function ManajemenPegawai({ callApi, opdId, onKembali }) {
+export default function ManajemenPegawai({ callApi, opdId, role, onKembali }) {
   const [pegawaiList, setPegawaiList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState(null);
@@ -27,7 +27,7 @@ export default function ManajemenPegawai({ callApi, opdId, onKembali }) {
     setLoading(true);
 
     try {
-      const result = await callApi("getPegawai", { opdId });
+      const result = await callApi("getPegawai", { role, opdId });
 
       if (Array.isArray(result)) {
         setPegawaiList(result);
@@ -95,6 +95,7 @@ export default function ManajemenPegawai({ callApi, opdId, onKembali }) {
 
     try {
       const result = await callApi("updateStatusPegawai", {
+        opdId,
         username,
         field,
         value: nilaiBaru,
@@ -247,6 +248,7 @@ export default function ManajemenPegawai({ callApi, opdId, onKembali }) {
     const prosesReset = async () => {
       try {
         const result = await callApi("resetPassword", {
+          opdId,
           username,
         });
 

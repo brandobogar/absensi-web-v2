@@ -54,7 +54,7 @@ function Login({ onLoginSuccess }) {
 
       console.log("HASIL LOGIN ADMIN:", adminResult);
 
-      if (adminResult?.status === "berhasil") {
+      if (adminResult?.status === "berhasil" || adminResult?.status === true) {
         onLoginSuccess({
           username: adminResult.username,
           nama: "Administrator",
@@ -113,11 +113,11 @@ function Login({ onLoginSuccess }) {
 
           {/* TITLE */}
           <div className="mb-8 text-center">
-            <h1 className="text-2xl font-bold text-slate-800">Absensi PPPK</h1>
+            <h1 className="text-2xl font-bold text-slate-800">Absensi</h1>
 
-            <p className="mt-1 text-sm text-slate-500">
+            {/* <p className="mt-1 text-sm text-slate-500">
               {loadingConfig ? "Memuat..." : namaOpd}
-            </p>
+            </p> */}
           </div>
 
           <form onSubmit={handleLogin}>
@@ -228,7 +228,7 @@ function Login({ onLoginSuccess }) {
 
         {/* FOOTER */}
         <p className="px-4 mt-5 text-xs text-center text-slate-400">
-          Sistem Absensi {namaOpd}
+          Sistem Absensi
         </p>
       </div>
     </div>
