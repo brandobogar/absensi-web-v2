@@ -184,22 +184,24 @@ export default function ManajemenPegawai({ callApi, opdId, role, onKembali }) {
   // SIMPAN EDIT PEGAWAI
   // ============================================================
 
-  const handleEditPegawai = async ({ username, nama, nip }) => {
+  const handleEditPegawai = async ({ id_pegawai, nama, nip, password }) => {
     setSavingEdit(true);
 
     try {
       console.log("DATA EDIT:", {
         opdId,
-        username,
+        id_pegawai,
         nama,
         nip,
+        password,
       });
 
       const result = await callApi("updatePegawai", {
         opdId,
-        username,
+        id_pegawai,
         nama,
         nip,
+        password,
       });
 
       console.log("HASIL UPDATE PEGAWAI:", result);
@@ -207,7 +209,7 @@ export default function ManajemenPegawai({ callApi, opdId, role, onKembali }) {
       if (result?.status === "berhasil") {
         setPegawaiList((prev) =>
           prev.map((p) =>
-            p.username === username
+            p.id_pegawai === id_pegawai
               ? {
                   ...p,
                   nama,
@@ -220,7 +222,7 @@ export default function ManajemenPegawai({ callApi, opdId, role, onKembali }) {
         setShowEdit(false);
         setPegawaiEdit(null);
 
-        alert(`Data pegawai ${username} berhasil diperbarui.`);
+        alert(`Data pegawai ${id_pegawai} berhasil diperbarui.`);
       } else {
         alert(result?.message || "Gagal memperbarui data pegawai.");
       }
@@ -231,7 +233,6 @@ export default function ManajemenPegawai({ callApi, opdId, role, onKembali }) {
       setSavingEdit(false);
     }
   };
-
   // ============================================================
   // RESET PASSWORD
   // ============================================================

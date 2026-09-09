@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { callApi } from "../../api";
 import SesiModal from "../../components/admin/SesiModal";
 import PetaModal from "../../components/admin/PetaModal";
+import ExportRekapModal from "../../components/admin/ExportRekapModal";
 
 const menitKeJam = (menit) => {
   const nilai = Number(menit) || 0;
@@ -69,6 +70,9 @@ export default function Admin({
   const [koordinatKantor, setKoordinatKantor] = useState(null);
   const [halaman, setHalaman] = useState("dashboard");
   const [showPeta, setShowPeta] = useState(false);
+
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const [jamSesi, setJamSesi] = useState({
     senin_masuk_mulai: 420,
@@ -719,11 +723,7 @@ export default function Admin({
 
           <button
             type="button"
-            onClick={() =>
-              alert(
-                "Fitur export akan kita sambungkan setelah halaman Admin selesai.",
-              )
-            }
+            onClick={() => setShowExportModal(true)}
             className="w-full py-3 mb-3 text-sm font-bold text-white transition bg-blue-600 hover:bg-blue-700 rounded-xl"
           >
             📊 Export Rekap Bulan Ini
@@ -754,6 +754,46 @@ export default function Admin({
         koordinatAwal={koordinatKantor}
         onSimpan={handleSimpanLokasi}
         onBatal={() => setShowPeta(false)}
+      />
+      <ExportRekapModal
+        visible={showExportModal}
+        isSuperAdmin={isSuperAdmin}
+        daftarOpd={daftarOpd}
+        selectedOpdId={selectedOpdId}
+        exporting={exporting}
+        onBatal={() => setShowExportModal(false)}
+        onExport={async ({ opdId, bulan, tahun }) => {
+          setExporting(true);
+
+          try {
+            console.log("DATA EXPORT:", {
+              opdId,
+              bulan,
+              tahun,
+            });
+
+            const result = await callApi("exportRekap", {
+              opdId,
+              bulan,
+              tahun,
+            });
+
+            console.log("HASIL EXPORT:", result);
+
+            if (result?.status === "berhasil") {
+              alert(`File rekap berhasil dibuat:\n${result.namaFile}`);
+
+              setShowExportModal(false);
+            } else {
+              alert(result?.message || "Gagal mengeksport rekap.");
+            }
+          } catch (error) {
+            console.error("handleExport:", error);
+            alert("Terjadi kesalahan saat mengeksport data.");
+          } finally {
+            setExporting(false);
+          }
+        }}
       />
     </div>
   );

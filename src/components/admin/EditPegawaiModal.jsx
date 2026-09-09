@@ -29,6 +29,7 @@ export default function EditPegawaiModal({
     }
 
     onSimpan({
+      id_pegawai: pegawai.id_pegawai,
       username: pegawai.username,
       nama: namaBersih,
       nip: nipBersih,
