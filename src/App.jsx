@@ -15,7 +15,7 @@ import Absen from "./pages/user/Absen";
 import Admin from "./pages/admin/Admin";
 
 import ManajemenPegawai from "./pages/admin/ManajemenPegawai";
-
+import ManajemenOpd from "./pages/admin/ManajemenOpd";
 function App() {
   const [userData, setUserData] = useState(null);
 
@@ -197,6 +197,15 @@ function App() {
       );
     }
 
+    if (adminPage === "opd") {
+      return (
+        <ManajemenOpd
+          callApi={callApi}
+          onKembali={() => setAdminPage("dashboard")}
+        />
+      );
+    }
+
     // -------------------------
     // DASHBOARD ADMIN
     // -------------------------
@@ -209,6 +218,7 @@ function App() {
         setSelectedOpdId={setSelectedOpdId}
         onLogout={handleLogout}
         onManajemenPegawai={() => setAdminPage("pegawai")}
+        onManajemenOpd={() => setAdminPage("opd")}
       />
     );
   }

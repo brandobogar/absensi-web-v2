@@ -58,7 +58,10 @@ export default function Admin({
   setSelectedOpdId,
   onLogout,
   onManajemenPegawai,
+  onManajemenOpd,
 }) {
+  const opdAktif = isSuperAdmin ? selectedOpdId : opdId;
+
   const [absensiList, setAbsensiList] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -152,7 +155,7 @@ export default function Admin({
 
   const fetchConfig = async () => {
     try {
-      const result = await callApi("getConfig", { opdId });
+      const result = await callApi("getConfig", { opdId: opdAktif });
 
       if (!result) return;
 
@@ -213,9 +216,9 @@ export default function Admin({
   useEffect(() => {
     if (!opdId) return;
 
-    fetchAbsensiAdmin();
+    // fetchAbsensiAdmin();
     fetchConfig();
-  }, [opdId]);
+  }, [opdAktif]);
 
   const handleSimpanRadius = async () => {
     const nilaiRadius = parseFloat(radius);
@@ -274,19 +277,31 @@ export default function Admin({
     }));
 
     setSavingJam(true);
+    console.log("DEBUG SIMPAN SESI:", {
+      opdId,
+      selectedOpdId,
+      isSuperAdmin,
+      opdAktif,
+      keyMulai: modalSesi.keyMulai,
+      keySelesai: modalSesi.keySelesai,
+      mulai,
+      selesai,
+    });
 
     try {
       const r1 = await callApi("updateConfig", {
-        opdId,
+        opdId: opdAktif,
         key: modalSesi.keyMulai,
         value: mulai,
       });
 
       const r2 = await callApi("updateConfig", {
-        opdId,
+        opdId: opdAktif,
         key: modalSesi.keySelesai,
         value: selesai,
       });
+      console.log("HASIL UPDATE SESI r1:", r1);
+      console.log("HASIL UPDATE SESI r2:", r2);
 
       if (r1?.status === "berhasil" && r2?.status === "berhasil") {
         setJamSesi((prev) => ({
@@ -712,6 +727,16 @@ export default function Admin({
         {/* AKSI */}
         <div className="p-5 mb-5 bg-white border shadow-sm rounded-2xl border-slate-200">
           <h2 className="mb-4 text-base font-bold text-slate-800">Aksi</h2>
+          {/* KHUSUS SUPERADMIN */}
+          {isSuperAdmin && (
+            <button
+              type="button"
+              onClick={onManajemenOpd}
+              className="w-full py-3 mb-3 text-sm font-bold text-purple-700 transition border border-purple-200 bg-purple-50 hover:bg-purple-100 rounded-xl"
+            >
+              🏢 Manajemen OPD
+            </button>
+          )}
 
           <button
             type="button"
