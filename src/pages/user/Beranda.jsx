@@ -34,96 +34,75 @@ function Beranda({
     loadStatusHariIni();
   }, [userData, refreshTrigger]);
 
-  const loadStatusHariIni = async () => {
-    if (!userData?.nama) {
-      setLoadingStatus(false);
-      return;
-    }
+ const loadStatusHariIni = async () => {
+   if (!userData?.id_pegawai) {
+     setLoadingStatus(false);
+     return;
+   }
 
-    setLoadingStatus(true);
+   setLoadingStatus(true);
 
-    try {
-      const res = await callApi("getStatusAbsen", {
-        nama: userData.nama,
-      });
+   try {
+     const res = await callApi("getStatusAbsen", {
+       id_pegawai: userData.id_pegawai,
+     });
 
-      if (res) {
-        setStatusAbsen(res);
-      }
-    } catch (error) {
-      console.error("Gagal mengambil status absen:", error);
-    } finally {
-      setLoadingStatus(false);
-    }
-  };
+     if (res) {
+       setStatusAbsen(res);
+     }
+   } catch (error) {
+     console.error("Gagal mengambil status absen:", error);
+   } finally {
+     setLoadingStatus(false);
+   }
+ };
 
-  // =========================
-  // LOAD KONFIGURASI JAM SESI
-  // =========================
-  useEffect(() => {
-    loadJamSesi();
-  }, []);
+ // =========================
+ // LOAD KONFIGURASI JAM SESI
+ // =========================
+ useEffect(() => {
+   if (userData?.opd_id) {
+     loadJamSesi();
+   }
+ }, [userData]);
 
-  const loadJamSesi = async () => {
-    setLoadingSesi(true);
+ const loadJamSesi = async () => {
+   setLoadingSesi(true);
 
-    try {
-      const result = await callApi("getConfig", {});
+   try {
+     const result = await callApi("getConfig", { opdId: userData.opd_id });
 
-      if (result) {
-        setJamSesi({
-          senin_masuk_mulai: parseInt(
-            result.senin_masuk_mulai || 420
-          ),
-          senin_masuk_selesai: parseInt(
-            result.senin_masuk_selesai || 540
-          ),
+     if (result) {
+       setJamSesi({
+         senin_masuk_mulai: parseInt(result.senin_masuk_mulai || 420),
+         senin_masuk_selesai: parseInt(result.senin_masuk_selesai || 540),
 
-          senin_istirahat_mulai: parseInt(
-            result.senin_istirahat_mulai || 750
-          ),
-          senin_istirahat_selesai: parseInt(
-            result.senin_istirahat_selesai || 840
-          ),
+         senin_istirahat_mulai: parseInt(result.senin_istirahat_mulai || 750),
+         senin_istirahat_selesai: parseInt(
+           result.senin_istirahat_selesai || 840,
+         ),
 
-          senin_pulang_mulai: parseInt(
-            result.senin_pulang_mulai || 1020
-          ),
-          senin_pulang_selesai: parseInt(
-            result.senin_pulang_selesai || 1200
-          ),
+         senin_pulang_mulai: parseInt(result.senin_pulang_mulai || 1020),
+         senin_pulang_selesai: parseInt(result.senin_pulang_selesai || 1200),
 
-          jumat_masuk_mulai: parseInt(
-            result.jumat_masuk_mulai || 390
-          ),
-          jumat_masuk_selesai: parseInt(
-            result.jumat_masuk_selesai || 510
-          ),
+         jumat_masuk_mulai: parseInt(result.jumat_masuk_mulai || 390),
+         jumat_masuk_selesai: parseInt(result.jumat_masuk_selesai || 510),
 
-          jumat_istirahat_mulai: parseInt(
-            result.jumat_istirahat_mulai || 780
-          ),
-          jumat_istirahat_selesai: parseInt(
-            result.jumat_istirahat_selesai || 870
-          ),
+         jumat_istirahat_mulai: parseInt(result.jumat_istirahat_mulai || 780),
+         jumat_istirahat_selesai: parseInt(
+           result.jumat_istirahat_selesai || 870,
+         ),
 
-          jumat_pulang_mulai: parseInt(
-            result.jumat_pulang_mulai || 1020
-          ),
-          jumat_pulang_selesai: parseInt(
-            result.jumat_pulang_selesai || 1200
-          ),
-        });
-      }
-    } catch (error) {
-      console.error(
-        "Gagal mengambil konfigurasi jam sesi:",
-        error
-      );
-    } finally {
-      setLoadingSesi(false);
-    }
-  };
+         jumat_pulang_mulai: parseInt(result.jumat_pulang_mulai || 1020),
+         jumat_pulang_selesai: parseInt(result.jumat_pulang_selesai || 1200),
+       });
+     }
+   } catch (error) {
+     console.error("Gagal mengambil konfigurasi jam sesi:", error);
+   } finally {
+     setLoadingSesi(false);
+   }
+ };
 
   // =========================
   // KONVERSI MENIT → JAM

@@ -10,29 +10,6 @@ function Login({ onLoginSuccess }) {
   const [namaOpd, setNamaOpd] = useState("Instansi");
   const [loadingConfig, setLoadingConfig] = useState(false);
 
-  // =========================
-  // AMBIL CONFIG
-  // =========================
-  // useEffect(() => {
-  //   const fetchConfig = async () => {
-  //     try {
-  //       const result = await callApi("getConfig", {});
-
-  //       console.log("CONFIG LOGIN:", result);
-
-  //       if (result?.nama_opd) {
-  //         setNamaOpd(String(result.nama_opd));
-  //       }
-  //     } catch (error) {
-  //       console.error("Gagal memuat konfigurasi:", error);
-  //     } finally {
-  //       setLoadingConfig(false);
-  //     }
-  //   };
-
-  //   fetchConfig();
-  // }, []);
-
   const handleLogin = async (e) => {
     e.preventDefault();
 

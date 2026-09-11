@@ -232,7 +232,7 @@ export default function ManajemenOpd({ callApi, onKembali }) {
               </span>{" "}
               dari{" "}
               <span className="font-semibold text-slate-700">
-                {opdList.length-1}
+                {opdList.length - 1}
               </span>{" "}
               OPD
             </p>
@@ -344,14 +344,18 @@ export default function ManajemenOpd({ callApi, onKembali }) {
                   <div>
                     <p className="text-xs text-slate-400">Latitude</p>
                     <p className="mt-1 text-sm font-semibold text-slate-700">
-                      {opd.kantorLat ?? "-"}
+                      {opd.kantorLat != null
+                        ? Number(opd.kantorLat).toFixed(6)
+                        : "-"}
                     </p>
                   </div>
 
                   <div>
                     <p className="text-xs text-slate-400">Longitude</p>
                     <p className="mt-1 text-sm font-semibold text-slate-700">
-                      {opd.kantorLng ?? "-"}
+                      {opd.kantorLng != null
+                        ? Number(opd.kantorLng).toFixed(6)
+                        : "-"}
                     </p>
                   </div>
                 </div>

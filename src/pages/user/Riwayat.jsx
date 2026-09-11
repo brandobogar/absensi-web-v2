@@ -40,7 +40,7 @@ function Riwayat({ userData }) {
 
     try {
       const res = await callApi("getRiwayat", {
-        nama: userData.nama,
+        id_pegawai: userData.id_pegawai,
         tanggalMulai: dari,
         tanggalSelesai: sampai,
       });
@@ -264,7 +264,7 @@ function Riwayat({ userData }) {
             /* DATA */
             <div className="divide-y divide-slate-100">
               {riwayatData.map((row, index) => {
-                const status = row[6];
+                const status = row[8];
 
                 const isApproved = status === "APPROVED";
 
@@ -280,7 +280,7 @@ function Riwayat({ userData }) {
                       </p>
 
                       <p className="mt-1 text-xs text-slate-500">
-                        Sesi: {row[2] || "-"}
+                        Sesi: {row[4] || "-"}
                       </p>
 
                       {formatJam(row[0]) && (
