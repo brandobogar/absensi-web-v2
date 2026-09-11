@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Absensi PPPK</string>
+    <string name="title_activity_main">Absensi PPPK</string>
+    <string name="package_name">com.sangihe.absensi</string>
+    <string name="custom_url_scheme">com.sangihe.absensi</string>
+</resources>
