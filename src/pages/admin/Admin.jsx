@@ -372,6 +372,10 @@ export default function Admin({
     (item) => item[6] === "APPROVED",
   ).length;
 
+  const fiturBelumTersedia = () => {
+    alert("Fitur belum tersedia.");
+  };
+
   return (
     <div className="min-h-screen bg-slate-100">
       <div className="mx-auto w-full max-w-[1200px] px-4 py-6 md:px-6">
@@ -748,7 +752,7 @@ export default function Admin({
 
           <button
             type="button"
-            onClick={() => setShowExportModal(true)}
+            onClick={fiturBelumTersedia}
             className="w-full py-3 mb-3 text-sm font-bold text-white transition bg-blue-600 hover:bg-blue-700 rounded-xl"
           >
             📊 Export Rekap Bulan Ini
