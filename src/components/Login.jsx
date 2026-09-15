@@ -33,7 +33,7 @@ function Login({ onLoginSuccess }) {
         device_id: deviceId,
       });
 
-      console.log("HASIL LOGIN ADMIN:", adminResult);
+      
 
       if (adminResult?.status === "berhasil" || adminResult?.status === true) {
         onLoginSuccess({
@@ -56,14 +56,14 @@ function Login({ onLoginSuccess }) {
         device_id: deviceId,
       });
 
-      console.log("HASIL LOGIN PEGAWAI:", result);
-
       if (result?.status === "nonaktif") {
         alert(
           result.message ||
             "Akun Anda sedang dinonaktifkan. Silakan hubungi administrator.",
         );
-      } else if (result?.nama) {
+      } else if (result?.status === "device_terkunci") {
+        alert(result.message || "Akun masih digunakan pada perangkat lain.");
+      } else if (result?.status === "berhasil" && result?.nama) {
         onLoginSuccess(result);
       } else {
         alert("Username atau password salah!");
