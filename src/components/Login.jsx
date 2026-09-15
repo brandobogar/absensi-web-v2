@@ -9,6 +9,7 @@ function Login({ onLoginSuccess }) {
 
   const [namaOpd, setNamaOpd] = useState("Instansi");
   const [loadingConfig, setLoadingConfig] = useState(false);
+  
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -20,6 +21,8 @@ function Login({ onLoginSuccess }) {
 
     setLoading(true);
 
+    const deviceId = getDeviceId();
+
     try {
       // =========================
       // COBA LOGIN ADMIN
@@ -27,6 +30,7 @@ function Login({ onLoginSuccess }) {
       const adminResult = await callApi("loginAdmin", {
         username,
         password,
+        device_id: deviceId,
       });
 
       console.log("HASIL LOGIN ADMIN:", adminResult);
@@ -49,6 +53,7 @@ function Login({ onLoginSuccess }) {
       const result = await callApi("loginPegawai", {
         username,
         password,
+        device_id: deviceId,
       });
 
       console.log("HASIL LOGIN PEGAWAI:", result);
@@ -69,6 +74,17 @@ function Login({ onLoginSuccess }) {
     } finally {
       setLoading(false);
     }
+  };
+  const getDeviceId = () => {
+    let deviceId = localStorage.getItem("absensi_device_id");
+
+    if (!deviceId) {
+      deviceId = crypto.randomUUID();
+      localStorage.setItem("absensi_device_id", deviceId);
+    }
+    console.log("DEVICE ID:", deviceId);
+
+    return deviceId;
   };
 
   return (
