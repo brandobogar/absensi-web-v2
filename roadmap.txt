@@ -1,0 +1,60 @@
+| Tahap | Pengembangan                                    | Status              |
+| ----- | ----------------------------------------------- | ------------------- |
+| **1** | Authentication / keamanan login                 | 🟡 Sebagian selesai |
+| 1.1   | Validasi username & password                    | ✅                   |
+| 1.2   | Cek akun aktif/nonaktif                         | ✅                   |
+| 1.3   | Hapus log password dari browser/backend         | ✅                   |
+| 1.4   | Password hashing                                | ⏳                   |
+| 1.5   | Pembatasan percobaan login                      | ⏳                   |
+| **2** | Device Lock / Login Activity                    | ✅ **SELESAI**       |
+| 2.1   | Generate `device_id`                            | ✅                   |
+| 2.2   | Simpan device ID                                | ✅                   |
+| 2.3   | Lock perangkat 30 menit                         | ✅                   |
+| 2.4   | Device berbeda → ditolak                        | ✅                   |
+| 2.5   | Device sama → diperbolehkan                     | ✅                   |
+| 2.6   | Expired → boleh login kembali                   | ✅                   |
+| 2.7   | Catat login diterima/ditolak                    | ✅                   |
+| **3** | Session / Token Security                        | ⏳ **BERIKUTNYA**    |
+| 3.1   | Generate session token                          | ⏳                   |
+| 3.2   | Simpan token secara aman                        | ⏳                   |
+| 3.3   | Validasi token di backend                       | ⏳                   |
+| 3.4   | Token memiliki expiry                           | ⏳                   |
+| 3.5   | Request API harus membawa token                 | ⏳                   |
+| 3.6   | Logout → token invalid                          | ⏳                   |
+| **4** | Backend Authorization                           | ⏳                   |
+| 4.1   | Validasi role                                   | ⏳                   |
+| 4.2   | Admin hanya mengakses OPD sendiri               | ⏳                   |
+| 4.3   | Superadmin dapat mengakses seluruh OPD          | ⏳                   |
+| 4.4   | Backend tidak percaya `opd_id` dari frontend    | ⏳                   |
+| 4.5   | Backend tidak percaya `id_pegawai` dari request | ⏳                   |
+| **5** | Keamanan Absensi                                | ⏳                   |
+| 5.1   | Validasi `id_pegawai` di server                 | ⏳                   |
+| 5.2   | Validasi `opd_id` di server                     | ⏳                   |
+| 5.3   | Perhitungan jarak dilakukan server              | ⏳                   |
+| 5.4   | Validasi sesi dilakukan server                  | ⏳                   |
+| 5.5   | Cegah manipulasi koordinat                      | ⏳                   |
+| 5.6   | Cegah absensi atas nama pegawai lain            | ⏳                   |
+| **6** | API & Data Security                             | ⏳                   |
+| 6.1   | Batasi data yang dikirim ke frontend            | ⏳                   |
+| 6.2   | Jangan expose password                          | ⏳                   |
+| 6.3   | Validasi semua parameter request                | ⏳                   |
+| 6.4   | Hilangkan endpoint/fungsi yang tidak diperlukan | ⏳                   |
+| 6.5   | Lindungi Spreadsheet/Drive                      | ⏳                   |
+| **7** | Password Security                               | ⏳                   |
+| 7.1   | Hash password                                   | ⏳                   |
+| 7.2   | Migrasi password lama                           | ⏳                   |
+| 7.3   | Password minimal 6–8 karakter                   | ⏳                   |
+| 7.4   | Ganti password dengan verifikasi password lama  | ✅                   |
+| 7.5   | Reset password oleh admin                       | ✅                   |
+| **8** | Security Cleanup                                | ⏳                   |
+| 8.1   | Hapus `Logger.log()` yang sensitif              | ⏳                   |
+| 8.2   | Hapus fungsi test                               | ⏳                   |
+| 8.3   | Hapus credential/default credential dari source | ⏳                   |
+| 8.4   | Periksa konfigurasi lama yang tidak digunakan   | ⏳                   |
+| 8.5   | Audit endpoint `doPost`                         | ⏳                   |
+| **9** | Deployment Security                             | ⏳                   |
+| 9.1   | HTTPS                                           | ⏳                   |
+| 9.2   | Konfigurasi production                          | ⏳                   |
+| 9.3   | CORS / origin policy bila diperlukan            | ⏳                   |
+| 9.4   | Source map production                           | ⏳                   |
+| 9.5   | Konfigurasi cPanel/Vercel                       | ⏳                   |
