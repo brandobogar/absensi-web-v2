@@ -42,6 +42,7 @@ function Absen({ userData, onAbsenSuccess }) {
     try {
       const result = await callApi("getConfig", {
         opdId: userData.opd_id,
+        session_token: userData.session_token,
       });
 
       if (result) {
@@ -75,6 +76,7 @@ function Absen({ userData, onAbsenSuccess }) {
     try {
       const res = await callApi("getSesi", {
         opdId: userData.opd_id,
+        session_token: userData.session_token,
       });
 
       if (res && res.sesi) {
@@ -109,6 +111,7 @@ function Absen({ userData, onAbsenSuccess }) {
     try {
       const result = await callApi("getStatusAbsen", {
         id_pegawai: userData.id_pegawai,
+        session_token: userData.session_token,
       });
 
       console.log("STATUS ABSEN HARI INI:", result);
@@ -280,6 +283,7 @@ function Absen({ userData, onAbsenSuccess }) {
         lng: jarakMeter.lng,
 
         jarak: jarakMeter.jarak,
+        session_token: userData.session_token,
       });
 
       if (result && result.status === "APPROVED") {

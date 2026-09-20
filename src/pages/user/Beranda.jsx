@@ -27,6 +27,8 @@ function Beranda({
   const [jamSesi, setJamSesi] = useState(null);
   const [loadingSesi, setLoadingSesi] = useState(true);
 
+  const [namaOpd, setNamaOpd] = useState("-");
+
   // =========================
   // LOAD STATUS ABSEN HARI INI
   // =========================
@@ -34,75 +36,84 @@ function Beranda({
     loadStatusHariIni();
   }, [userData, refreshTrigger]);
 
- const loadStatusHariIni = async () => {
-   if (!userData?.id_pegawai) {
-     setLoadingStatus(false);
-     return;
-   }
+  const loadStatusHariIni = async () => {
+    if (!userData?.id_pegawai) {
+      setLoadingStatus(false);
+      return;
+    }
 
-   setLoadingStatus(true);
+    setLoadingStatus(true);
 
-   try {
-     const res = await callApi("getStatusAbsen", {
-       id_pegawai: userData.id_pegawai,
-     });
+    try {
+      const res = await callApi("getStatusAbsen", {
+        id_pegawai: userData.id_pegawai,
+      });
 
-     if (res) {
-       setStatusAbsen(res);
-     }
-   } catch (error) {
-     console.error("Gagal mengambil status absen:", error);
-   } finally {
-     setLoadingStatus(false);
-   }
- };
+      if (res) {
+        setStatusAbsen(res);
+      }
+    } catch (error) {
+      console.error("Gagal mengambil status absen:", error);
+    } finally {
+      setLoadingStatus(false);
+    }
+  };
 
- // =========================
- // LOAD KONFIGURASI JAM SESI
- // =========================
- useEffect(() => {
-   if (userData?.opd_id) {
-     loadJamSesi();
-   }
- }, [userData]);
+  // =========================
+  // LOAD KONFIGURASI JAM SESI
+  // =========================
+  useEffect(() => {
+    if (userData?.opd_id) {
+      loadJamSesi();
+    }
+  }, [userData]);
 
- const loadJamSesi = async () => {
-   setLoadingSesi(true);
+  const loadJamSesi = async () => {
+    setLoadingSesi(true);
 
-   try {
-     const result = await callApi("getConfig", { opdId: userData.opd_id });
+    console.log("USERDATA BERANDA:", userData);
+    console.log("SESSION TOKEN BERANDA:", userData?.session_token);
 
-     if (result) {
-       setJamSesi({
-         senin_masuk_mulai: parseInt(result.senin_masuk_mulai || 420),
-         senin_masuk_selesai: parseInt(result.senin_masuk_selesai || 540),
+    try {
+      const result = await callApi("getConfig", {
+        opdId: userData.opd_id,
+        session_token: userData.session_token,
+      });
 
-         senin_istirahat_mulai: parseInt(result.senin_istirahat_mulai || 750),
-         senin_istirahat_selesai: parseInt(
-           result.senin_istirahat_selesai || 840,
-         ),
+      console.log("HASIL getConfig BERANDA:", result);
 
-         senin_pulang_mulai: parseInt(result.senin_pulang_mulai || 1020),
-         senin_pulang_selesai: parseInt(result.senin_pulang_selesai || 1200),
+      if (result) {
+        setJamSesi({
+          senin_masuk_mulai: parseInt(result.senin_masuk_mulai || 420),
+          senin_masuk_selesai: parseInt(result.senin_masuk_selesai || 540),
 
-         jumat_masuk_mulai: parseInt(result.jumat_masuk_mulai || 390),
-         jumat_masuk_selesai: parseInt(result.jumat_masuk_selesai || 510),
+          senin_istirahat_mulai: parseInt(result.senin_istirahat_mulai || 750),
+          senin_istirahat_selesai: parseInt(
+            result.senin_istirahat_selesai || 840,
+          ),
 
-         jumat_istirahat_mulai: parseInt(result.jumat_istirahat_mulai || 780),
-         jumat_istirahat_selesai: parseInt(
-           result.jumat_istirahat_selesai || 870,
-         ),
+          senin_pulang_mulai: parseInt(result.senin_pulang_mulai || 1020),
+          senin_pulang_selesai: parseInt(result.senin_pulang_selesai || 1200),
 
-         jumat_pulang_mulai: parseInt(result.jumat_pulang_mulai || 1020),
-         jumat_pulang_selesai: parseInt(result.jumat_pulang_selesai || 1200),
-       });
-     }
-   } catch (error) {
-     console.error("Gagal mengambil konfigurasi jam sesi:", error);
-   } finally {
-     setLoadingSesi(false);
-   }
- };
+          jumat_masuk_mulai: parseInt(result.jumat_masuk_mulai || 390),
+          jumat_masuk_selesai: parseInt(result.jumat_masuk_selesai || 510),
+
+          jumat_istirahat_mulai: parseInt(result.jumat_istirahat_mulai || 780),
+          jumat_istirahat_selesai: parseInt(
+            result.jumat_istirahat_selesai || 870,
+          ),
+
+          jumat_pulang_mulai: parseInt(result.jumat_pulang_mulai || 1020),
+          jumat_pulang_selesai: parseInt(result.jumat_pulang_selesai || 1200),
+        });
+        setNamaOpd(result.nama_opd || "-");
+      }
+    } catch (error) {
+      console.error("Gagal mengambil konfigurasi jam sesi:", error);
+    } finally {
+      setLoadingSesi(false);
+    }
+  };
 
   // =========================
   // KONVERSI MENIT → JAM
@@ -111,10 +122,7 @@ function Beranda({
     const j = Math.floor(menit / 60);
     const m = menit % 60;
 
-    return `${String(j).padStart(2, "0")}:${String(m).padStart(
-      2,
-      "0"
-    )}`;
+    return `${String(j).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
   };
 
   // =========================
@@ -190,10 +198,7 @@ function Beranda({
       day: "numeric",
     };
 
-    return new Date().toLocaleDateString(
-      "id-ID",
-      options
-    );
+    return new Date().toLocaleDateString("id-ID", options);
   };
 
   const jadwalHariIni = getJadwalHariIni();
@@ -223,6 +228,8 @@ function Beranda({
             <p className="text-xs text-slate-500 mt-0.5">
               NIP: {userData?.nip || "-"}
             </p>
+
+            <p className="text-xs text-slate-500 mt-0.5 truncate">{namaOpd}</p>
 
             <p className="text-xs text-blue-600 font-medium mt-1">
               {getTanggalHariIni()}
@@ -301,17 +308,14 @@ function Beranda({
                 </span>
 
                 <span className="text-sm font-bold text-slate-800">
-                  {menitKeJam(item.mulai)} -{" "}
-                  {menitKeJam(item.selesai)}
+                  {menitKeJam(item.mulai)} - {menitKeJam(item.selesai)}
                 </span>
               </div>
             ))}
           </div>
         ) : (
           <div className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-4 text-center">
-            <p className="text-sm text-slate-500">
-              Tidak ada jadwal absensi
-            </p>
+            <p className="text-sm text-slate-500">Tidak ada jadwal absensi</p>
           </div>
         )}
       </div>
@@ -327,9 +331,7 @@ function Beranda({
         <div className="grid grid-cols-3 gap-2">
           {/* MASUK */}
           <div className="bg-slate-50 rounded-xl border border-slate-200 p-3 text-center">
-            <p className="text-xs font-medium text-slate-500 mb-2">
-              Masuk
-            </p>
+            <p className="text-xs font-medium text-slate-500 mb-2">Masuk</p>
 
             {loadingStatus ? (
               <div className="h-4 flex justify-center">
@@ -350,9 +352,7 @@ function Beranda({
 
           {/* ISTIRAHAT */}
           <div className="bg-slate-50 rounded-xl border border-slate-200 p-3 text-center">
-            <p className="text-xs font-medium text-slate-500 mb-2">
-              Istirahat
-            </p>
+            <p className="text-xs font-medium text-slate-500 mb-2">Istirahat</p>
 
             {loadingStatus ? (
               <div className="h-4 flex justify-center">
@@ -373,9 +373,7 @@ function Beranda({
 
           {/* PULANG */}
           <div className="bg-slate-50 rounded-xl border border-slate-200 p-3 text-center">
-            <p className="text-xs font-medium text-slate-500 mb-2">
-              Pulang
-            </p>
+            <p className="text-xs font-medium text-slate-500 mb-2">Pulang</p>
 
             {loadingStatus ? (
               <div className="h-4 flex justify-center">

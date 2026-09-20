@@ -49,6 +49,7 @@ function EditProfileModal({ visible, onClose, userData, onProfileUpdated }) {
       const result = await callApi("updateUsernamePegawai", {
         usernameLama,
         usernameBaru,
+        session_token: userData?.session_token,
       });
 
       if (result?.status === "berhasil") {
@@ -112,9 +113,8 @@ function EditProfileModal({ visible, onClose, userData, onProfileUpdated }) {
         username: userData?.username,
         passwordLama,
         passwordBaru,
+        session_token: userData?.session_token,
       });
-
-      console.log("HASIL UPDATE PASSWORD:", result);
 
       if (result?.status === "berhasil") {
         alert("Password berhasil diperbarui.");

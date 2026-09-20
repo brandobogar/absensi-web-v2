@@ -37,10 +37,8 @@ function Login({ onLoginSuccess }) {
 
       if (adminResult?.status === "berhasil" || adminResult?.status === true) {
         onLoginSuccess({
-          username: adminResult.username,
+          ...adminResult,
           nama: "Administrator",
-          role: adminResult.role,
-          opd_id: adminResult.opd_id,
         });
 
         return;

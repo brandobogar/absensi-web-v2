@@ -59,6 +59,7 @@ export default function Admin({
   onLogout,
   onManajemenPegawai,
   onManajemenOpd,
+  userData,
 }) {
   const opdAktif = isSuperAdmin ? selectedOpdId : opdId;
 
@@ -109,11 +110,14 @@ export default function Admin({
     keyMulai: "",
     keySelesai: "",
   });
+
   const fetchAbsensiAdmin = async () => {
     setLoading(true);
 
     try {
-      const data = await callApi("getAbsensiAdmin", {});
+      const data = await callApi("getAbsensiAdmin", {
+        session_token: userData.session_token,
+      });
 
       setAbsensiList(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -130,9 +134,9 @@ export default function Admin({
     setLoadingOpd(true);
 
     try {
-      const result = await callApi("getDaftarOpd");
-
-      console.log("DAFTAR OPD:", result);
+      const result = await callApi("getDaftarOpd", {
+        session_token: userData.session_token,
+      });
 
       if (Array.isArray(result)) {
         setDaftarOpd(result);
@@ -155,7 +159,10 @@ export default function Admin({
 
   const fetchConfig = async () => {
     try {
-      const result = await callApi("getConfig", { opdId: opdAktif });
+      const result = await callApi("getConfig", {
+        opdId: opdAktif,
+        session_token: userData.session_token,
+      });
 
       if (!result) return;
 
@@ -241,6 +248,7 @@ export default function Admin({
         opdId,
         key: "radius",
         value: nilaiRadius,
+        session_token: userData.session_token,
       });
 
       if (result?.status === "berhasil") {
@@ -293,12 +301,14 @@ export default function Admin({
         opdId: opdAktif,
         key: modalSesi.keyMulai,
         value: mulai,
+        session_token: userData.session_token,
       });
 
       const r2 = await callApi("updateConfig", {
         opdId: opdAktif,
         key: modalSesi.keySelesai,
         value: selesai,
+        session_token: userData.session_token,
       });
       console.log("HASIL UPDATE SESI r1:", r1);
       console.log("HASIL UPDATE SESI r2:", r2);
@@ -342,12 +352,14 @@ export default function Admin({
         opdId,
         key: "kantorLat",
         value: koordinatBaru.latitude,
+        session_token: userData.session_token,
       });
 
       const r2 = await callApi("updateConfig", {
         opdId,
         key: "kantorLng",
         value: koordinatBaru.longitude,
+        session_token: userData.session_token,
       });
 
       if (r1?.status === "berhasil" && r2?.status === "berhasil") {
@@ -374,6 +386,7 @@ export default function Admin({
 
   const fiturBelumTersedia = () => {
     alert("Fitur belum tersedia.");
+    // setShowExportModal(true);
   };
 
   return (
@@ -413,11 +426,15 @@ export default function Admin({
                 <>
                   <option value="">-- Pilih Instansi --</option>
 
-                  {daftarOpd.map((opd) => (
-                    <option key={opd.opd_id} value={opd.opd_id}>
-                      {opd.nama_opd} ({opd.opd_id})
-                    </option>
-                  ))}
+                  {daftarOpd
+                    .filter(
+                      (opd) => String(opd.opd_id || "").trim() !== "OPD000",
+                    )
+                    .map((opd) => (
+                      <option key={opd.opd_id} value={opd.opd_id}>
+                        {opd.nama_opd} ({opd.opd_id})
+                      </option>
+                    ))}
                 </>
               )}
             </select>
@@ -436,11 +453,14 @@ export default function Admin({
 
           <div className="p-3 border bg-slate-50 border-slate-200 rounded-xl">
             <p className="text-sm font-semibold text-slate-700">
-              {namaOpd || "Memuat nama instansi..."}
+              {isSuperAdmin
+                ? daftarOpd.find((opd) => opd.opd_id === selectedOpdId)
+                    ?.nama_opd || "Pilih instansi..."
+                : namaOpd || "Memuat nama instansi..."}
             </p>
 
             <p className="mt-1 text-xs text-slate-500">
-              OPD ID: {opdId || "-"}
+              OPD ID: {isSuperAdmin ? selectedOpdId || "-" : opdId || "-"}
             </p>
           </div>
         </div>
@@ -805,12 +825,34 @@ export default function Admin({
               opdId,
               bulan,
               tahun,
+
+              session_token: userData.session_token,
             });
 
             console.log("HASIL EXPORT:", result);
 
-            if (result?.status === "berhasil") {
-              alert(`File rekap berhasil dibuat:\n${result.namaFile}`);
+            if (result?.status === "berhasil" && result?.downloadUrl) {
+              // ========================================
+              // DOWNLOAD FILE
+              // ========================================
+
+              const link = document.createElement("a");
+
+              link.href = result.downloadUrl;
+
+              link.download = result.namaFile;
+
+              link.target = "_blank";
+
+              document.body.appendChild(link);
+
+              link.click();
+
+              document.body.removeChild(link);
+
+              // ========================================
+              // TUTUP MODAL
+              // ========================================
 
               setShowExportModal(false);
             } else {
@@ -818,6 +860,7 @@ export default function Admin({
             }
           } catch (error) {
             console.error("handleExport:", error);
+
             alert("Terjadi kesalahan saat mengeksport data.");
           } finally {
             setExporting(false);
