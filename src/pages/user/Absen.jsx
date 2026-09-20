@@ -1,24 +1,17 @@
 import { useEffect, useState } from "react";
+
 import { callApi } from "../../api";
 
 function Absen({ userData, onAbsenSuccess }) {
   const [sesiAktif, setSesiAktif] = useState(null);
-
   const [gpsStatus, setGpsStatus] = useState("Mengecek sesi waktu...");
-
   const [jarakMeter, setJarakMeter] = useState(null);
   const [isLokasiValid, setIsLokasiValid] = useState(false);
-
   const [loadingSesi, setLoadingSesi] = useState(true);
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [sudahAbsen, setSudahAbsen] = useState(false);
-
   const [loadingGPS, setLoadingGPS] = useState(false);
   const [loadingAbsen, setLoadingAbsen] = useState(false);
-
-  // =========================
-  // KONFIGURASI KANTOR
-  // =========================
 
   const [configKantor, setConfigKantor] = useState({
     radius: null,
@@ -29,7 +22,7 @@ function Absen({ userData, onAbsenSuccess }) {
   const [loadingConfig, setLoadingConfig] = useState(true);
 
   // =========================
-  // LOAD KONFIGURASI KANTOR
+  // AMBIL KONFIGURASI KANTOR
   // =========================
 
   useEffect(() => {
@@ -54,7 +47,6 @@ function Absen({ userData, onAbsenSuccess }) {
       }
     } catch (error) {
       console.error("Gagal mengambil konfigurasi kantor:", error);
-
       setGpsStatus("❌ Gagal mengambil konfigurasi kantor.");
     } finally {
       setLoadingConfig(false);
@@ -62,7 +54,7 @@ function Absen({ userData, onAbsenSuccess }) {
   };
 
   // =========================
-  // CEK SESI ABSEN
+  // CEK SESI ABSENSI
   // =========================
 
   useEffect(() => {
@@ -84,8 +76,6 @@ function Absen({ userData, onAbsenSuccess }) {
 
         setSesiAktif(sesi);
 
-        // Setelah sesi diketahui,
-        // cek apakah sudah absen pada sesi tersebut.
         await cekStatusAbsen(sesi);
       } else {
         setSesiAktif(null);
@@ -102,7 +92,7 @@ function Absen({ userData, onAbsenSuccess }) {
   };
 
   // =========================
-  // CEK STATUS ABSEN SESI
+  // CEK STATUS ABSEN HARI INI
   // =========================
 
   const cekStatusAbsen = async (sesi) => {
@@ -117,7 +107,6 @@ function Absen({ userData, onAbsenSuccess }) {
       console.log("STATUS ABSEN HARI INI:", result);
 
       if (result && result[sesi] && result[sesi] !== "-") {
-        // Sudah absen pada sesi ini
         setSudahAbsen(true);
         setIsLokasiValid(false);
         setJarakMeter(null);
@@ -130,7 +119,6 @@ function Absen({ userData, onAbsenSuccess }) {
           `Anda sudah melakukan absen ${sesi} pada pukul ${result[sesi]}.`,
         );
       } else {
-        // Belum absen
         setSudahAbsen(false);
 
         setGpsStatus(`Sesi aktif: ${sesi}. Silakan verifikasi posisi Anda.`);
@@ -139,7 +127,6 @@ function Absen({ userData, onAbsenSuccess }) {
       console.error("Gagal mengecek status absensi:", error);
 
       setSudahAbsen(false);
-
       setGpsStatus("❌ Gagal mengecek status absensi.");
     } finally {
       setLoadingStatus(false);
@@ -147,14 +134,13 @@ function Absen({ userData, onAbsenSuccess }) {
   };
 
   // =========================
-  // HITUNG JARAK
+  // HITUNG JARAK GPS
   // =========================
 
   const hitungJarak = (lat1, lon1, lat2, lon2) => {
     const R = 6371000;
 
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
-
     const dLon = ((lon2 - lon1) * Math.PI) / 180;
 
     const a =
@@ -189,13 +175,11 @@ function Absen({ userData, onAbsenSuccess }) {
     }
 
     setLoadingGPS(true);
-
     setGpsStatus("⏳ Mendeteksi lokasi GPS...");
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const userLat = position.coords.latitude;
-
         const userLng = position.coords.longitude;
 
         const distance = hitungJarak(
@@ -207,13 +191,35 @@ function Absen({ userData, onAbsenSuccess }) {
 
         const roundedDist = Math.round(distance);
 
+        // Simpan lokasi GPS dan jarak.
+        // Data ini tetap dicatat meskipun hari Jumat/WFH.
         setJarakMeter({
           lat: userLat,
           lng: userLng,
           jarak: roundedDist,
         });
 
-        if (roundedDist <= configKantor.radius) {
+        // =========================
+        // ATURAN LOKASI
+        // =========================
+        //
+        // Jumat = WFH
+        // Radius TIDAK digunakan untuk
+        // menentukan valid/tidaknya lokasi.
+        //
+        // Senin-Kamis:
+        // Radius tetap berlaku.
+        // =========================
+
+        const isJumat = new Date().getDay() === 5;
+
+        if (isJumat) {
+          setIsLokasiValid(true);
+
+          setGpsStatus(
+            `✅ WFH Jumat. Lokasi tercatat. Jarak: ${roundedDist} meter dari kantor.`,
+          );
+        } else if (roundedDist <= configKantor.radius) {
           setIsLokasiValid(true);
 
           setGpsStatus(
@@ -256,7 +262,7 @@ function Absen({ userData, onAbsenSuccess }) {
   };
 
   // =========================
-  // KIRIM ABSEN
+  // SIMPAN ABSENSI
   // =========================
 
   const submitAbsenFinal = async () => {
@@ -265,24 +271,19 @@ function Absen({ userData, onAbsenSuccess }) {
     }
 
     setLoadingAbsen(true);
-
     setGpsStatus("⏳ Menyimpan absensi...");
 
     try {
       const result = await callApi("simpanAbsensi", {
         id_pegawai: userData.id_pegawai,
-
         nama: userData.nama,
-
         opd_id: userData.opd_id,
-
         sesi: sesiAktif,
 
         lat: jarakMeter.lat,
-
         lng: jarakMeter.lng,
-
         jarak: jarakMeter.jarak,
+
         session_token: userData.session_token,
       });
 
@@ -320,157 +321,152 @@ function Absen({ userData, onAbsenSuccess }) {
   // =========================
 
   return (
-    <div className="p-4 min-h-[calc(100vh-80px)] flex items-center">
-      <div className="w-full">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-          {/* HEADER */}
+    <div className="min-h-screen bg-gray-50 px-4 py-6">
+      <div className="mx-auto w-full max-w-md">
+        {/* HEADER */}
+        <div className="mb-5">
+          <h1 className="text-2xl font-bold text-gray-800">Absensi GPS</h1>
 
-          <div className="text-center mb-5">
-            <div className="w-16 h-16 mx-auto rounded-full bg-blue-100 flex items-center justify-center mb-3">
-              <span className="text-3xl">📍</span>
-            </div>
+          <p className="mt-1 text-sm text-gray-500">
+            Silakan lakukan verifikasi lokasi sebelum absen.
+          </p>
+        </div>
 
-            <h1 className="text-xl font-bold text-slate-800">Absensi GPS</h1>
+        {/* SESI */}
+        <div className="mb-4 rounded-2xl bg-white p-5 shadow-sm">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">
+            Sesi Absensi
+          </p>
 
-            <p className="text-sm text-slate-500 mt-1">
-              {userData?.nama || "-"}
+          {loadingSesi ? (
+            <p className="text-sm text-gray-500">⏳ Mengecek sesi...</p>
+          ) : sesiAktif ? (
+            <p className="text-xl font-bold text-blue-600">{sesiAktif}</p>
+          ) : (
+            <p className="text-sm font-medium text-gray-500">
+              Tidak ada sesi aktif
             </p>
-          </div>
-
-          {/* SESI */}
-
-          {sesiAktif && (
-            <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <p className="text-xs font-medium text-blue-500 mb-1">
-                Sesi Absensi
-              </p>
-
-              <p className="text-lg font-bold text-blue-700">{sesiAktif}</p>
-            </div>
-          )}
-
-          {/* STATUS */}
-
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-5">
-            <p className="text-sm text-slate-600 text-center leading-6">
-              {loadingSesi || loadingConfig || loadingStatus ? (
-                <span className="inline-flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
-                  Memuat...
-                </span>
-              ) : (
-                gpsStatus
-              )}
-            </p>
-          </div>
-
-          {/* TOMBOL GPS */}
-
-          {sesiAktif && !sudahAbsen && !isLokasiValid && (
-            <button
-              type="button"
-              onClick={cekLokasiGPS}
-              disabled={loadingGPS || loadingConfig || loadingStatus}
-              className="
-                  w-full
-                  py-3.5
-                  px-4
-                  bg-blue-600
-                  text-white
-                  rounded-xl
-                  font-semibold
-                  text-sm
-                  hover:bg-blue-700
-                  active:bg-blue-800
-                  disabled:bg-blue-300
-                  transition
-                "
-            >
-              {loadingGPS ? (
-                <span className="inline-flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                  Mendeteksi Lokasi...
-                </span>
-              ) : (
-                "📍 Check In (Verifikasi GPS)"
-              )}
-            </button>
-          )}
-
-          {/* JARAK */}
-
-          {jarakMeter && !sudahAbsen && (
-            <div className="mt-4 bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
-              <p className="text-xs text-slate-500">Jarak dari kantor</p>
-
-              <p className="text-lg font-bold text-slate-800 mt-1">
-                {jarakMeter.jarak} meter
-              </p>
-
-              <p className="text-xs text-slate-400 mt-1">
-                Radius yang diizinkan: {configKantor.radius} meter
-              </p>
-            </div>
-          )}
-
-          {/* TOMBOL KIRIM ABSEN */}
-
-          {isLokasiValid && !sudahAbsen && (
-            <button
-              type="button"
-              onClick={submitAbsenFinal}
-              disabled={loadingAbsen}
-              className="
-                  w-full
-                  mt-4
-                  py-3.5
-                  px-4
-                  bg-green-600
-                  text-white
-                  rounded-xl
-                  font-semibold
-                  text-sm
-                  hover:bg-green-700
-                  active:bg-green-800
-                  disabled:bg-green-300
-                  transition
-                "
-            >
-              {loadingAbsen ? (
-                <span className="inline-flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                  Menyimpan Absensi...
-                </span>
-              ) : (
-                "✅ Kirim Absen Sekarang"
-              )}
-            </button>
-          )}
-
-          {/* JIKA SUDAH ABSEN */}
-
-          {!loadingSesi && !loadingStatus && sesiAktif && sudahAbsen && (
-            <div className="mt-4 text-center">
-              <p className="text-sm font-medium text-green-600">
-                ✅ Anda sudah melakukan absen pada sesi ini.
-              </p>
-
-              <p className="text-xs text-slate-400 mt-1">
-                Tidak perlu melakukan absensi kembali.
-              </p>
-            </div>
-          )}
-
-          {/* JIKA DI LUAR SESI */}
-
-          {!loadingSesi && !sesiAktif && (
-            <div className="mt-4 text-center">
-              <p className="text-xs text-slate-400">
-                Silakan kembali pada jam absensi yang telah ditentukan.
-              </p>
-            </div>
           )}
         </div>
+
+        {/* STATUS */}
+        <div className="mb-4 rounded-2xl bg-white p-5 shadow-sm">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+            Status
+          </p>
+
+          <p className="text-sm leading-relaxed text-gray-700">
+            {loadingStatus ? "⏳ Mengecek status absensi..." : gpsStatus}
+          </p>
+        </div>
+
+        {/* KONFIGURASI */}
+        {!loadingConfig && configKantor.radius && (
+          <div className="mb-4 rounded-2xl bg-white p-5 shadow-sm">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
+              Area Absensi
+            </p>
+
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Radius kantor</span>
+
+              <span className="font-semibold text-gray-800">
+                {configKantor.radius} meter
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* TOMBOL GPS */}
+        {sesiAktif && !sudahAbsen && !isLokasiValid && (
+          <button
+            type="button"
+            onClick={cekLokasiGPS}
+            disabled={loadingGPS || loadingAbsen}
+            className="mb-4 w-full rounded-2xl bg-blue-600 px-5 py-4 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loadingGPS ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                Mendeteksi Lokasi...
+              </span>
+            ) : (
+              "📍 Verifikasi Lokasi"
+            )}
+          </button>
+        )}
+
+        {/* HASIL GPS */}
+        {jarakMeter && !sudahAbsen && (
+          <div className="mb-4 rounded-2xl bg-white p-5 shadow-sm">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
+              Lokasi GPS
+            </p>
+
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between gap-4">
+                <span className="text-gray-500">Latitude</span>
+
+                <span className="font-mono text-gray-700">
+                  {jarakMeter.lat}
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-4">
+                <span className="text-gray-500">Longitude</span>
+
+                <span className="font-mono text-gray-700">
+                  {jarakMeter.lng}
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-4">
+                <span className="text-gray-500">Jarak dari kantor</span>
+
+                <span className="font-bold text-gray-800">
+                  {jarakMeter.jarak} meter
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TOMBOL ABSEN */}
+        {isLokasiValid && !sudahAbsen && sesiAktif && (
+          <button
+            type="button"
+            onClick={submitAbsenFinal}
+            disabled={loadingAbsen}
+            className="w-full rounded-2xl bg-green-600 px-5 py-4 text-sm font-bold text-white shadow-sm transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loadingAbsen ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                Menyimpan...
+              </span>
+            ) : (
+              `✅ Absen ${sesiAktif}`
+            )}
+          </button>
+        )}
+
+        {/* SUDAH ABSEN */}
+        {sudahAbsen && (
+          <div className="rounded-2xl bg-green-50 p-5 text-center">
+            <p className="text-sm font-semibold text-green-700">
+              ✅ Absensi untuk sesi ini sudah tercatat.
+            </p>
+          </div>
+        )}
+
+        {/* DI LUAR SESI */}
+        {!loadingSesi && !sesiAktif && (
+          <div className="rounded-2xl bg-yellow-50 p-5 text-center">
+            <p className="text-sm font-medium text-yellow-700">
+              ⏰ Saat ini tidak ada sesi absensi yang aktif.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
