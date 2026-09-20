@@ -3,7 +3,7 @@ import TambahOpdModal from "../../components/admin/TambahOpdModal";
 import EditOpdModal from "../../components/admin/EditOpdModal";
 import ManajemenAdmin from "./ManajemenAdmin";
 
-export default function ManajemenOpd({ callApi, onKembali }) {
+export default function ManajemenOpd({ callApi, onKembali, userData }) {
   const [opdList, setOpdList] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -26,7 +26,9 @@ export default function ManajemenOpd({ callApi, onKembali }) {
     setLoading(true);
 
     try {
-      const result = await callApi("getDaftarOpd");
+      const result = await callApi("getDaftarOpd", {
+        session_token: userData?.session_token,
+      });
 
       console.log("DAFTAR OPD:", result);
 
@@ -47,18 +49,12 @@ export default function ManajemenOpd({ callApi, onKembali }) {
     setSaving(true);
 
     try {
-      console.log("DATA TAMBAH OPD:", {
-        namaOpd,
-        kantorLat,
-        kantorLng,
-        radius,
-      });
-
       const result = await callApi("tambahOpd", {
         namaOpd,
         kantorLat,
         kantorLng,
         radius,
+        session_token: userData?.session_token,
       });
 
       console.log("HASIL TAMBAH OPD:", result);
@@ -86,17 +82,11 @@ export default function ManajemenOpd({ callApi, onKembali }) {
     setSaving(true);
 
     try {
-      console.log("DATA EDIT OPD:", {
-        opdId,
-        namaOpd,
-      });
-
       const result = await callApi("updateOpd", {
         opdId,
         namaOpd,
+        session_token: userData?.session_token,
       });
-
-      console.log("HASIL EDIT OPD:", result);
 
       if (result?.status === "berhasil") {
         setShowEdit(false);
@@ -156,6 +146,7 @@ export default function ManajemenOpd({ callApi, onKembali }) {
         callApi={callApi}
         opdId={opdAdmin.opd_id}
         onKembali={() => setOpdAdmin(null)}
+        userData={userData}
       />
     );
   }

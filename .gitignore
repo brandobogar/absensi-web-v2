@@ -31,3 +31,6 @@ android/.idea/
 android/app/.cxx/
 android/*.iml
 .npmkeep
+
+src/daftar_file.csv
+src/list.bat

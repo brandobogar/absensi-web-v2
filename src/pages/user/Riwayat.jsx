@@ -43,6 +43,7 @@ function Riwayat({ userData }) {
         id_pegawai: userData.id_pegawai,
         tanggalMulai: dari,
         tanggalSelesai: sampai,
+        session_token: userData.session_token,
       });
 
       if (Array.isArray(res)) {

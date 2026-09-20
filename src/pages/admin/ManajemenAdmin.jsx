@@ -4,7 +4,12 @@ import TambahAdminModal from "../../components/admin/TambahAdminModal";
 import EditAdminModal from "../../components/admin/EditAdminModal";
 import ResetPasswordAdminModal from "../../components/admin/ResetPasswordAdminModal";
 
-export default function ManajemenAdmin({ callApi, opdId, onKembali }) {
+export default function ManajemenAdmin({
+  callApi,
+  opdId,
+  onKembali,
+  userData,
+}) {
   const [adminList, setAdminList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -31,6 +36,7 @@ export default function ManajemenAdmin({ callApi, opdId, onKembali }) {
     try {
       const result = await callApi("getAdmin", {
         opdId,
+        session_token: userData?.session_token,
       });
 
       console.log("DAFTAR ADMIN:", result);
@@ -66,6 +72,7 @@ export default function ManajemenAdmin({ callApi, opdId, onKembali }) {
         opdId,
         username,
         password,
+        session_token: userData?.session_token,
       });
 
       console.log("HASIL TAMBAH ADMIN:", result);
@@ -100,6 +107,7 @@ export default function ManajemenAdmin({ callApi, opdId, onKembali }) {
         opdId,
         usernameLama,
         usernameBaru: username,
+        session_token: userData?.session_token,
       });
 
       console.log("HASIL EDIT ADMIN:", result);
@@ -135,6 +143,7 @@ export default function ManajemenAdmin({ callApi, opdId, onKembali }) {
         opdId,
         username,
         passwordBaru,
+        session_token: userData?.session_token,
       });
 
       console.log("HASIL RESET PASSWORD ADMIN:", result);
@@ -184,6 +193,7 @@ export default function ManajemenAdmin({ callApi, opdId, onKembali }) {
         opdId,
         username: admin.username,
         status: statusBaru,
+        session_token: userData?.session_token,
       });
 
       console.log("HASIL UPDATE STATUS ADMIN:", result);

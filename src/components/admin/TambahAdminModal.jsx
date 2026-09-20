@@ -54,6 +54,18 @@ export default function TambahAdminModal({
     onBatal();
   };
 
+  useEffect(() => {
+    console.log("TambahAdminModal visible:", visible);
+
+    if (!visible) return;
+
+    console.log("RESET FORM TAMBAH ADMIN");
+
+    setUsername("");
+    setPassword("");
+    setKonfirmasiPassword("");
+  }, [visible]);
+
   if (!visible) return null;
 
   return (
@@ -69,9 +81,7 @@ export default function TambahAdminModal({
 
         {/* OPD */}
         <div className="mb-4">
-          <p className="mb-1.5 text-[13px] font-medium text-slate-500">
-            OPD
-          </p>
+          <p className="mb-1.5 text-[13px] font-medium text-slate-500">OPD</p>
 
           <div className="w-full px-3 py-3 text-sm border bg-slate-100 border-slate-200 rounded-[10px] text-slate-500">
             {opdId || "-"}
@@ -93,6 +103,7 @@ export default function TambahAdminModal({
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Masukkan username"
+            autoComplete="off"
             disabled={saving}
             autoFocus
             className="w-full px-3 py-3 text-sm border outline-none bg-slate-50 border-slate-300 rounded-[10px] text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
@@ -114,6 +125,7 @@ export default function TambahAdminModal({
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Masukkan password"
+            autoComplete="new-password"
             disabled={saving}
             className="w-full px-3 py-3 text-sm border outline-none bg-slate-50 border-slate-300 rounded-[10px] text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
           />
@@ -131,6 +143,7 @@ export default function TambahAdminModal({
           <input
             id="tambah-admin-konfirmasi"
             type="password"
+            autoComplete="new-password"
             value={konfirmasiPassword}
             onChange={(e) => setKonfirmasiPassword(e.target.value)}
             placeholder="Ulangi password"

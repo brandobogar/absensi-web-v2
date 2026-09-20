@@ -193,6 +193,7 @@ function App() {
           selectedOpdId={selectedOpdId}
           setSelectedOpdId={setSelectedOpdId}
           onKembali={() => setAdminPage("dashboard")}
+          userData={userData}
         />
       );
     }
@@ -202,6 +203,7 @@ function App() {
         <ManajemenOpd
           callApi={callApi}
           onKembali={() => setAdminPage("dashboard")}
+          userData={userData}
         />
       );
     }
@@ -211,6 +213,7 @@ function App() {
     // -------------------------
     return (
       <Admin
+        userData={userData}
         opdId={opdId}
         role={role}
         isSuperAdmin={isSuperAdmin}
