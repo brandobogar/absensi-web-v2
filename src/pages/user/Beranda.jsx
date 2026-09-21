@@ -219,7 +219,7 @@ function Beranda({
           {/* PROFILE INFO */}
           <div className="flex-1 min-w-0">
             <h1 className="text-base font-bold text-slate-800 truncate">
-              Halo {userData?.nama || "-"}
+              Halo {userData?.nama ? userData.nama.split(" ")[0] : "-"}
             </h1>
 
             <p className="text-xs text-slate-500 mt-0.5">
