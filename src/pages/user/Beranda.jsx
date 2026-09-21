@@ -47,8 +47,9 @@ function Beranda({
     try {
       const res = await callApi("getStatusAbsen", {
         id_pegawai: userData.id_pegawai,
+        session_token: userData.session_token,
       });
-
+      console.log("HASIL getStatusAbsen BERANDA:", res);
       if (res) {
         setStatusAbsen(res);
       }
@@ -218,12 +219,8 @@ function Beranda({
           {/* PROFILE INFO */}
           <div className="flex-1 min-w-0">
             <h1 className="text-base font-bold text-slate-800 truncate">
-              {userData?.nama || "-"}
+              Halo {userData?.nama || "-"}
             </h1>
-
-            <p className="text-sm text-blue-600 mt-0.5">
-              @{userData?.username || "-"}
-            </p>
 
             <p className="text-xs text-slate-500 mt-0.5">
               NIP: {userData?.nip || "-"}

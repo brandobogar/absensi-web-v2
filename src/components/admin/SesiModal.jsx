@@ -297,7 +297,7 @@ export default function SesiModal({ visible, sesi, onSimpan, onBatal }) {
       className="
 fixed
 inset-0
-z-[100]
+z-[1100]
 flex
 items-center
 justify-center

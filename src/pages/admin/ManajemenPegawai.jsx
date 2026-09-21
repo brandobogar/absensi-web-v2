@@ -49,6 +49,7 @@ export default function ManajemenPegawai({
       const result = await callApi("getPegawai", {
         role,
         opdId: isSuperAdmin ? "" : opdId,
+        session_token: userData?.session_token,
       });
 
       if (Array.isArray(result)) {
@@ -172,6 +173,7 @@ export default function ManajemenPegawai({
         username,
         field,
         value: nilaiBaru,
+        session_token: userData?.session_token,
       });
 
       if (result?.status === "berhasil") {
@@ -220,6 +222,7 @@ export default function ManajemenPegawai({
         nama,
         username,
         nip,
+        session_token: userData?.session_token,
       });
 
       console.log("HASIL TAMBAH PEGAWAI:", result);
@@ -294,6 +297,7 @@ export default function ManajemenPegawai({
         id_pegawai,
         nama,
         nip,
+        session_token: userData?.session_token,
       });
 
       console.log("HASIL UPDATE PEGAWAI:", result);
@@ -348,6 +352,7 @@ export default function ManajemenPegawai({
       const result = await callApi("resetPassword", {
         opdId: isSuperAdmin ? pegawaiOpdId : opdId,
         username,
+        session_token: userData?.session_token,
       });
 
       console.log("HASIL RESET PASSWORD:", result);
@@ -613,9 +618,6 @@ export default function ManajemenPegawai({
               const updatingRadius =
                 updating === pegawai.username + "bypass_radius";
 
-              const updatingSesi =
-                updating === pegawai.username + "bypass_sesi";
-
               const updatingReset = updating === pegawai.username + "reset";
 
               return (
@@ -704,46 +706,50 @@ export default function ManajemenPegawai({
                   {/* ======================================
                         TOGGLE BYPASS RADIUS
                     ======================================= */}
-                  <div className="flex items-center justify-between gap-4 py-3 border-b border-slate-50">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-700">
-                        Bypass Radius
-                      </p>
+                  {isSuperAdmin && (
+                    <div>
+                      <div className="flex items-center justify-between gap-4 py-3 border-b border-slate-50">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-slate-700">
+                            Bypass Radius
+                          </p>
 
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        Absen dari mana saja
-                      </p>
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            Absen dari mana saja
+                          </p>
+                        </div>
+
+                        {updatingRadius ? (
+                          <div className="w-5 h-5 border-2 rounded-full animate-spin border-slate-200 border-t-blue-600 shrink-0" />
+                        ) : (
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={pegawai.bypass_radius === true}
+                            onClick={() =>
+                              handleToggle(
+                                pegawai.username,
+                                "bypass_radius",
+                                pegawai.bypass_radius,
+                                pegawai.opd_id,
+                              )
+                            }
+                            className={`relative h-6 w-11 shrink-0 rounded-full transition ${
+                              pegawai.bypass_radius
+                                ? "bg-amber-500"
+                                : "bg-slate-300"
+                            }`}
+                          >
+                            <span
+                              className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition ${
+                                pegawai.bypass_radius ? "left-6" : "left-1"
+                              }`}
+                            />
+                          </button>
+                        )}
+                      </div>
                     </div>
-
-                    {updatingRadius ? (
-                      <div className="w-5 h-5 border-2 rounded-full animate-spin border-slate-200 border-t-blue-600 shrink-0" />
-                    ) : (
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={pegawai.bypass_radius === true}
-                        onClick={() =>
-                          handleToggle(
-                            pegawai.username,
-                            "bypass_radius",
-                            pegawai.bypass_radius,
-                            pegawai.opd_id,
-                          )
-                        }
-                        className={`relative h-6 w-11 shrink-0 rounded-full transition ${
-                          pegawai.bypass_radius
-                            ? "bg-amber-500"
-                            : "bg-slate-300"
-                        }`}
-                      >
-                        <span
-                          className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition ${
-                            pegawai.bypass_radius ? "left-6" : "left-1"
-                          }`}
-                        />
-                      </button>
-                    )}
-                  </div>
+                  )}
 
                   {/* ======================================
                         AKSI PEGAWAI

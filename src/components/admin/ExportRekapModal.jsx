@@ -99,11 +99,13 @@ export default function ExportRekapModal({
             >
               <option value="">-- Pilih Instansi --</option>
 
-              {daftarOpd.map((opd) => (
-                <option key={opd.opd_id} value={opd.opd_id}>
-                  {opd.nama_opd} ({opd.opd_id})
-                </option>
-              ))}
+              {daftarOpd
+                .filter((opd) => String(opd.opd_id || "").trim() !== "OPD000")
+                .map((opd) => (
+                  <option key={opd.opd_id} value={opd.opd_id}>
+                    {opd.nama_opd} ({opd.opd_id})
+                  </option>
+                ))}
             </select>
           </div>
         )}

@@ -1,54 +1,6 @@
 import { useEffect, useState } from "react";
 import { callApi } from "../../api";
-import SesiModal from "../../components/admin/SesiModal";
-import PetaModal from "../../components/admin/PetaModal";
 import ExportRekapModal from "../../components/admin/ExportRekapModal";
-
-const menitKeJam = (menit) => {
-  const nilai = Number(menit) || 0;
-
-  const jam = Math.floor(nilai / 60);
-  const menitSisa = nilai % 60;
-
-  return `${String(jam).padStart(2, "0")}:${String(menitSisa).padStart(
-    2,
-    "0",
-  )}`;
-};
-
-function SesiRow({ label, mulai, selesai, onUbah }) {
-  return (
-    <div className="flex items-center justify-between py-3 border-b border-slate-100">
-      <div>
-        <p className="text-sm font-semibold text-slate-700">{label}</p>
-
-        <p className="mt-1 text-xs text-slate-500">
-          {menitKeJam(mulai)} - {menitKeJam(selesai)}
-        </p>
-      </div>
-
-      <button
-        type="button"
-        onClick={onUbah}
-        className="
-          px-3
-          py-1.5
-          rounded-lg
-          border
-          border-blue-200
-          bg-blue-50
-          text-blue-600
-          text-xs
-          font-semibold
-          hover:bg-blue-100
-          transition
-        "
-      >
-        Ubah
-      </button>
-    </div>
-  );
-}
 
 export default function Admin({
   opdId,
@@ -66,50 +18,13 @@ export default function Admin({
   const [absensiList, setAbsensiList] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const [radius, setRadius] = useState("");
-
   const [namaOpd, setNamaOpd] = useState("");
   const [daftarOpd, setDaftarOpd] = useState([]);
   const [loadingOpd, setLoadingOpd] = useState(false);
-  const [koordinatKantor, setKoordinatKantor] = useState(null);
   const [halaman, setHalaman] = useState("dashboard");
-  const [showPeta, setShowPeta] = useState(false);
 
   const [showExportModal, setShowExportModal] = useState(false);
   const [exporting, setExporting] = useState(false);
-
-  const [jamSesi, setJamSesi] = useState({
-    senin_masuk_mulai: 420,
-    senin_masuk_selesai: 540,
-
-    senin_istirahat_mulai: 750,
-    senin_istirahat_selesai: 840,
-
-    senin_pulang_mulai: 1020,
-    senin_pulang_selesai: 1200,
-
-    jumat_masuk_mulai: 390,
-    jumat_masuk_selesai: 510,
-
-    jumat_istirahat_mulai: 780,
-    jumat_istirahat_selesai: 870,
-
-    jumat_pulang_mulai: 1020,
-    jumat_pulang_selesai: 1200,
-  });
-
-  const [savingRadius, setSavingRadius] = useState(false);
-
-  const [savingLokasi, setSavingLokasi] = useState(false);
-
-  const [savingJam, setSavingJam] = useState(false);
-
-  const [modalSesi, setModalSesi] = useState({
-    visible: false,
-    sesi: null,
-    keyMulai: "",
-    keySelesai: "",
-  });
 
   const fetchAbsensiAdmin = async () => {
     setLoading(true);
@@ -157,6 +72,8 @@ export default function Admin({
     }
   };
 
+  // Hanya nama OPD yang dipakai di dashboard ini.
+  // Radius, lokasi, dan jam sesi diatur di Manajemen OPD (Edit OPD).
   const fetchConfig = async () => {
     try {
       const result = await callApi("getConfig", {
@@ -164,53 +81,9 @@ export default function Admin({
         session_token: userData.session_token,
       });
 
-      if (!result) return;
-
-      if (result.radius !== undefined && result.radius !== null) {
-        setRadius(String(result.radius));
-      }
-
-      if (result.kantorLat && result.kantorLng) {
-        setKoordinatKantor({
-          latitude: parseFloat(result.kantorLat),
-          longitude: parseFloat(result.kantorLng),
-        });
-      }
-
-      if (result.nama_opd) {
-        console.log("NAMA OPD:", result.nama_opd);
+      if (result?.nama_opd) {
         setNamaOpd(String(result.nama_opd));
       }
-
-      setJamSesi({
-        senin_masuk_mulai: parseInt(result.senin_masuk_mulai || 420),
-
-        senin_masuk_selesai: parseInt(result.senin_masuk_selesai || 540),
-
-        senin_istirahat_mulai: parseInt(result.senin_istirahat_mulai || 750),
-
-        senin_istirahat_selesai: parseInt(
-          result.senin_istirahat_selesai || 840,
-        ),
-
-        senin_pulang_mulai: parseInt(result.senin_pulang_mulai || 1020),
-
-        senin_pulang_selesai: parseInt(result.senin_pulang_selesai || 1200),
-
-        jumat_masuk_mulai: parseInt(result.jumat_masuk_mulai || 390),
-
-        jumat_masuk_selesai: parseInt(result.jumat_masuk_selesai || 510),
-
-        jumat_istirahat_mulai: parseInt(result.jumat_istirahat_mulai || 780),
-
-        jumat_istirahat_selesai: parseInt(
-          result.jumat_istirahat_selesai || 870,
-        ),
-
-        jumat_pulang_mulai: parseInt(result.jumat_pulang_mulai || 1020),
-
-        jumat_pulang_selesai: parseInt(result.jumat_pulang_selesai || 1200),
-      });
     } catch (error) {
       console.error("Gagal memuat konfigurasi:", error);
     }
@@ -227,157 +100,6 @@ export default function Admin({
     fetchConfig();
   }, [opdAktif]);
 
-  const handleSimpanRadius = async () => {
-    const nilaiRadius = parseFloat(radius);
-
-    if (!radius || Number.isNaN(nilaiRadius) || nilaiRadius <= 0) {
-      alert("Masukkan nilai radius yang valid.");
-      return;
-    }
-
-    const konfirmasi = window.confirm(
-      `Ubah radius menjadi ${nilaiRadius} meter?`,
-    );
-
-    if (!konfirmasi) return;
-
-    setSavingRadius(true);
-
-    try {
-      const result = await callApi("updateConfig", {
-        opdId,
-        key: "radius",
-        value: nilaiRadius,
-        session_token: userData.session_token,
-      });
-
-      if (result?.status === "berhasil") {
-        alert(`Radius berhasil diubah menjadi ${nilaiRadius} meter.`);
-      } else {
-        alert("Gagal mengubah radius.");
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Terjadi kesalahan saat menyimpan radius.");
-    } finally {
-      setSavingRadius(false);
-    }
-  };
-
-  const handleUbahSesi = (hari, label, keyMulai, keySelesai) => {
-    setModalSesi({
-      visible: true,
-      sesi: {
-        hari,
-        label,
-        mulai: jamSesi[keyMulai],
-        selesai: jamSesi[keySelesai],
-      },
-      keyMulai,
-      keySelesai,
-    });
-  };
-
-  const handleSimpanSesi = async ({ mulai, selesai }) => {
-    setModalSesi((prev) => ({
-      ...prev,
-      visible: false,
-    }));
-
-    setSavingJam(true);
-    console.log("DEBUG SIMPAN SESI:", {
-      opdId,
-      selectedOpdId,
-      isSuperAdmin,
-      opdAktif,
-      keyMulai: modalSesi.keyMulai,
-      keySelesai: modalSesi.keySelesai,
-      mulai,
-      selesai,
-    });
-
-    try {
-      const r1 = await callApi("updateConfig", {
-        opdId: opdAktif,
-        key: modalSesi.keyMulai,
-        value: mulai,
-        session_token: userData.session_token,
-      });
-
-      const r2 = await callApi("updateConfig", {
-        opdId: opdAktif,
-        key: modalSesi.keySelesai,
-        value: selesai,
-        session_token: userData.session_token,
-      });
-      console.log("HASIL UPDATE SESI r1:", r1);
-      console.log("HASIL UPDATE SESI r2:", r2);
-
-      if (r1?.status === "berhasil" && r2?.status === "berhasil") {
-        setJamSesi((prev) => ({
-          ...prev,
-          [modalSesi.keyMulai]: mulai,
-          [modalSesi.keySelesai]: selesai,
-        }));
-
-        alert("Jam sesi berhasil diperbarui.");
-      } else {
-        alert("Gagal menyimpan jam sesi.");
-      }
-    } catch (error) {
-      console.error("Gagal menyimpan jam sesi:", error);
-
-      alert("Terjadi kesalahan saat menyimpan jam sesi.");
-    } finally {
-      setSavingJam(false);
-    }
-  };
-
-  const handleSimpanLokasi = async (koordinatBaru) => {
-    if (!koordinatBaru) {
-      alert("Koordinat lokasi tidak valid.");
-      return;
-    }
-
-    const konfirmasi = window.confirm(
-      `Simpan lokasi kantor pada:\n\nLatitude: ${koordinatBaru.latitude}\nLongitude: ${koordinatBaru.longitude}?`,
-    );
-
-    if (!konfirmasi) return;
-
-    setSavingLokasi(true);
-
-    try {
-      const r1 = await callApi("updateConfig", {
-        opdId,
-        key: "kantorLat",
-        value: koordinatBaru.latitude,
-        session_token: userData.session_token,
-      });
-
-      const r2 = await callApi("updateConfig", {
-        opdId,
-        key: "kantorLng",
-        value: koordinatBaru.longitude,
-        session_token: userData.session_token,
-      });
-
-      if (r1?.status === "berhasil" && r2?.status === "berhasil") {
-        setKoordinatKantor(koordinatBaru);
-        setShowPeta(false);
-
-        alert("Lokasi kantor berhasil diperbarui.");
-      } else {
-        alert("Gagal menyimpan lokasi kantor.");
-      }
-    } catch (error) {
-      console.error("Gagal menyimpan lokasi kantor:", error);
-      alert("Terjadi kesalahan saat menyimpan lokasi kantor.");
-    } finally {
-      setSavingLokasi(false);
-    }
-  };
-
   const totalAbsen = absensiList.length;
 
   const totalApproved = absensiList.filter(
@@ -385,8 +107,8 @@ export default function Admin({
   ).length;
 
   const fiturBelumTersedia = () => {
-    alert("Fitur belum tersedia.");
-    // setShowExportModal(true);
+    // alert("Fitur belum tersedia.");
+    setShowExportModal(true);
   };
 
   return (
@@ -401,68 +123,6 @@ export default function Admin({
           <p className="mt-1 text-sm text-slate-500">
             Sistem Absensi PPPK {namaOpd || "Instansi"}
           </p>
-        </div>
-
-        {/* PILIH OPD - KHUSUS SUPERADMIN */}
-        {isSuperAdmin && (
-          <div className="p-5 mb-5 bg-white border shadow-sm rounded-2xl border-slate-200">
-            <h2 className="text-base font-bold text-slate-800">
-              🔐 Pilih Instansi
-            </h2>
-
-            <p className="mt-1 mb-4 text-xs text-slate-500">
-              Superadmin dapat memilih OPD yang ingin dikelola.
-            </p>
-
-            <select
-              value={selectedOpdId || ""}
-              onChange={(e) => setSelectedOpdId(e.target.value)}
-              disabled={loadingOpd}
-              className="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            >
-              {loadingOpd ? (
-                <option value="">Memuat daftar OPD...</option>
-              ) : (
-                <>
-                  <option value="">-- Pilih Instansi --</option>
-
-                  {daftarOpd
-                    .filter(
-                      (opd) => String(opd.opd_id || "").trim() !== "OPD000",
-                    )
-                    .map((opd) => (
-                      <option key={opd.opd_id} value={opd.opd_id}>
-                        {opd.nama_opd} ({opd.opd_id})
-                      </option>
-                    ))}
-                </>
-              )}
-            </select>
-          </div>
-        )}
-
-        {/* IDENTITAS INSTANSI */}
-        <div className="p-5 mb-5 bg-white border shadow-sm rounded-2xl border-slate-200">
-          <h2 className="text-base font-bold text-slate-800">
-            🏢 Identitas Instansi
-          </h2>
-
-          <p className="mt-1 mb-4 text-xs text-slate-500">
-            Instansi yang digunakan oleh akun administrator ini.
-          </p>
-
-          <div className="p-3 border bg-slate-50 border-slate-200 rounded-xl">
-            <p className="text-sm font-semibold text-slate-700">
-              {isSuperAdmin
-                ? daftarOpd.find((opd) => opd.opd_id === selectedOpdId)
-                    ?.nama_opd || "Pilih instansi..."
-                : namaOpd || "Memuat nama instansi..."}
-            </p>
-
-            <p className="mt-1 text-xs text-slate-500">
-              OPD ID: {isSuperAdmin ? selectedOpdId || "-" : opdId || "-"}
-            </p>
-          </div>
         </div>
 
         {/* STATISTIK */}
@@ -522,7 +182,7 @@ export default function Admin({
                   month: "short",
                 });
 
-                const approved = item[6] === "APPROVED";
+                const approved = item[8] === "APPROVED";
 
                 return (
                   <div
@@ -531,11 +191,14 @@ export default function Admin({
                   >
                     <div className="min-w-0">
                       <p className="text-sm font-semibold truncate text-slate-700">
-                        {item[1]}
+                        {item[2]}
                       </p>
 
                       <p className="mt-1 text-xs text-slate-500">
-                        {tanggalText}, {jam} • Sesi: {item[2]}
+                        Sesi: {item[4]}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {tanggalText}, {jam}
                       </p>
                     </div>
 
@@ -546,206 +209,13 @@ export default function Admin({
                           ${approved ? "text-green-600" : "text-red-500"}
                         `}
                     >
-                      {item[6]}
+                      {item[8]}
                     </span>
                   </div>
                 );
               })}
             </div>
           )}
-        </div>
-
-        {/* RADIUS */}
-        <div className="p-5 mb-5 bg-white border shadow-sm rounded-2xl border-slate-200">
-          <h2 className="text-base font-bold text-slate-800">
-            ⚙️ Pengaturan Radius
-          </h2>
-
-          <p className="mt-1 mb-4 text-xs text-slate-500">
-            Atur jarak maksimal pegawai dari titik kantor untuk dapat melakukan
-            absen.
-          </p>
-
-          <div className="flex items-center gap-2 mb-3">
-            <input
-              type="number"
-              value={radius}
-              onChange={(e) => setRadius(e.target.value)}
-              placeholder="Contoh: 50"
-              min="1"
-              className="
-                flex-1
-                px-3
-                py-2.5
-                rounded-xl
-                border
-                border-slate-300
-                bg-slate-50
-                text-sm
-                outline-none
-                focus:border-blue-500
-                focus:ring-2
-                focus:ring-blue-100
-              "
-            />
-
-            <span className="text-sm text-slate-500">meter</span>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleSimpanRadius}
-            disabled={savingRadius}
-            className="w-full py-3 text-sm font-bold text-white transition bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-xl"
-          >
-            {savingRadius ? "Menyimpan..." : "💾 Simpan Radius"}
-          </button>
-        </div>
-
-        {/* LOKASI */}
-        <div className="p-5 mb-5 bg-white border shadow-sm rounded-2xl border-slate-200">
-          <h2 className="text-base font-bold text-slate-800">
-            📍 Titik Lokasi Kantor
-          </h2>
-
-          <p className="mt-1 mb-4 text-xs text-slate-500">
-            Atur titik koordinat kantor sebagai pusat radius absensi.
-          </p>
-
-          {koordinatKantor ? (
-            <div className="p-3 mb-3 border bg-slate-50 border-slate-200 rounded-xl">
-              <p className="text-xs text-slate-600">
-                Lat:{" "}
-                <span className="font-semibold">
-                  {koordinatKantor.latitude.toFixed(7)}
-                </span>
-              </p>
-
-              <p className="mt-1 text-xs text-slate-600">
-                Lng:{" "}
-                <span className="font-semibold">
-                  {koordinatKantor.longitude.toFixed(7)}
-                </span>
-              </p>
-            </div>
-          ) : (
-            <div className="p-3 mb-3 border bg-slate-50 border-slate-200 rounded-xl">
-              <p className="text-xs text-slate-400">
-                Koordinat kantor belum tersedia.
-              </p>
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={() => setShowPeta(true)}
-            className="w-full py-3 text-sm font-bold text-white transition bg-blue-600 hover:bg-blue-700 rounded-xl"
-          >
-            🗺️ Pilih di Peta
-          </button>
-        </div>
-
-        {/* JAM SESI */}
-        <div className="p-5 mb-5 bg-white border shadow-sm rounded-2xl border-slate-200">
-          <h2 className="mb-4 text-base font-bold text-slate-800">
-            🕐 Pengaturan Jam Sesi
-          </h2>
-
-          {savingJam && (
-            <p className="mb-3 text-xs text-blue-600">
-              Menyimpan perubahan jam...
-            </p>
-          )}
-
-          <h3 className="mb-2 text-sm font-bold text-blue-600">
-            Senin - Kamis
-          </h3>
-
-          <SesiRow
-            label="Masuk"
-            mulai={jamSesi.senin_masuk_mulai}
-            selesai={jamSesi.senin_masuk_selesai}
-            onUbah={() =>
-              handleUbahSesi(
-                "Senin - Kamis",
-                "Masuk",
-                "senin_masuk_mulai",
-                "senin_masuk_selesai",
-              )
-            }
-          />
-
-          <SesiRow
-            label="Istirahat"
-            mulai={jamSesi.senin_istirahat_mulai}
-            selesai={jamSesi.senin_istirahat_selesai}
-            onUbah={() =>
-              handleUbahSesi(
-                "Senin - Kamis",
-                "Istirahat",
-                "senin_istirahat_mulai",
-                "senin_istirahat_selesai",
-              )
-            }
-          />
-
-          <SesiRow
-            label="Pulang"
-            mulai={jamSesi.senin_pulang_mulai}
-            selesai={jamSesi.senin_pulang_selesai}
-            onUbah={() =>
-              handleUbahSesi(
-                "Senin - Kamis",
-                "Pulang",
-                "senin_pulang_mulai",
-                "senin_pulang_selesai",
-              )
-            }
-          />
-
-          <h3 className="mt-5 mb-2 text-sm font-bold text-blue-600">Jumat</h3>
-
-          <SesiRow
-            label="Masuk"
-            mulai={jamSesi.jumat_masuk_mulai}
-            selesai={jamSesi.jumat_masuk_selesai}
-            onUbah={() =>
-              handleUbahSesi(
-                "Jumat",
-                "Masuk",
-                "jumat_masuk_mulai",
-                "jumat_masuk_selesai",
-              )
-            }
-          />
-
-          <SesiRow
-            label="Istirahat"
-            mulai={jamSesi.jumat_istirahat_mulai}
-            selesai={jamSesi.jumat_istirahat_selesai}
-            onUbah={() =>
-              handleUbahSesi(
-                "Jumat",
-                "Istirahat",
-                "jumat_istirahat_mulai",
-                "jumat_istirahat_selesai",
-              )
-            }
-          />
-
-          <SesiRow
-            label="Pulang"
-            mulai={jamSesi.jumat_pulang_mulai}
-            selesai={jamSesi.jumat_pulang_selesai}
-            onUbah={() =>
-              handleUbahSesi(
-                "Jumat",
-                "Pulang",
-                "jumat_pulang_mulai",
-                "jumat_pulang_selesai",
-              )
-            }
-          />
         </div>
 
         {/* AKSI */}
@@ -775,7 +245,7 @@ export default function Admin({
             onClick={fiturBelumTersedia}
             className="w-full py-3 mb-3 text-sm font-bold text-white transition bg-blue-600 hover:bg-blue-700 rounded-xl"
           >
-            📊 Export Rekap Bulan Ini
+            📊 Export Rekapan Absen
           </button>
 
           <button
@@ -787,23 +257,6 @@ export default function Admin({
           </button>
         </div>
       </div>
-      <SesiModal
-        visible={modalSesi.visible}
-        sesi={modalSesi.sesi}
-        onSimpan={handleSimpanSesi}
-        onBatal={() =>
-          setModalSesi((prev) => ({
-            ...prev,
-            visible: false,
-          }))
-        }
-      />
-      <PetaModal
-        visible={showPeta}
-        koordinatAwal={koordinatKantor}
-        onSimpan={handleSimpanLokasi}
-        onBatal={() => setShowPeta(false)}
-      />
       <ExportRekapModal
         visible={showExportModal}
         isSuperAdmin={isSuperAdmin}
@@ -829,26 +282,39 @@ export default function Admin({
               session_token: userData.session_token,
             });
 
-            console.log("HASIL EXPORT:", result);
+            if (result?.status === "berhasil" && result?.fileBase64) {
+              // ========================================
+              // DOWNLOAD FILE (dari isi file yang dikirim server)
+              // ========================================
 
-            if (result?.status === "berhasil" && result?.downloadUrl) {
-              // ========================================
-              // DOWNLOAD FILE
-              // ========================================
+              const binary = atob(result.fileBase64);
+              const bytes = new Uint8Array(binary.length);
+
+              for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+              }
+
+              const blob = new Blob([bytes], {
+                type:
+                  result.mimeType ||
+                  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+              });
+
+              const url = URL.createObjectURL(blob);
 
               const link = document.createElement("a");
 
-              link.href = result.downloadUrl;
+              link.href = url;
 
               link.download = result.namaFile;
-
-              link.target = "_blank";
 
               document.body.appendChild(link);
 
               link.click();
 
               document.body.removeChild(link);
+
+              setTimeout(() => URL.revokeObjectURL(url), 1000);
 
               // ========================================
               // TUTUP MODAL

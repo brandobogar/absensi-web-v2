@@ -106,20 +106,28 @@ function App() {
   // =========================
   // LOGOUT
   // =========================
-  const handleLogout = () => {
-    try {
-      localStorage.removeItem("@user_session");
-      localStorage.removeItem("@is_admin");
-    } catch (error) {
-      console.error("Gagal menghapus sesi:", error);
-    }
+   const handleLogout = () => {
+     // ===== BARU: mulai =====
+     const token = userData?.session_token;
 
-    setUserData(null);
-    setIsAdmin(false);
-    setSelectedOpdId(null);
-    setActiveTab("beranda");
-    setAdminPage("dashboard");
-  };
+     if (token) {
+       callApi("logout", { session_token: token });
+     }
+     // ===== BARU: selesai =====
+
+     try {
+       localStorage.removeItem("@user_session");
+       localStorage.removeItem("@is_admin");
+     } catch (error) {
+       console.error("Gagal menghapus sesi:", error);
+     }
+
+     setUserData(null);
+     setIsAdmin(false);
+     setSelectedOpdId(null);
+     setActiveTab("beranda");
+     setAdminPage("dashboard");
+   };
 
   // =========================
   // ABSEN BERHASIL

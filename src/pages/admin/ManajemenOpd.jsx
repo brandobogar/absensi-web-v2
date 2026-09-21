@@ -12,6 +12,8 @@ export default function ManajemenOpd({ callApi, onKembali, userData }) {
 
   const [showEdit, setShowEdit] = useState(false);
   const [opdEdit, setOpdEdit] = useState(null);
+  const [configEdit, setConfigEdit] = useState(null);
+  const [loadingEdit, setLoadingEdit] = useState(false);
 
   const [opdAdmin, setOpdAdmin] = useState(null);
 
@@ -78,28 +80,87 @@ export default function ManajemenOpd({ callApi, onKembali, userData }) {
     }
   };
 
-  const handleEditOpd = async ({ opdId, namaOpd }) => {
-    setSaving(true);
+  // Ambil pengaturan (jam sesi) OPD lalu buka form Edit
+  const bukaEdit = async (opd) => {
+    setLoadingEdit(true);
 
     try {
-      const result = await callApi("updateOpd", {
-        opdId,
-        namaOpd,
+      const config = await callApi("getConfig", {
+        opdId: opd.opd_id,
         session_token: userData?.session_token,
       });
 
-      if (result?.status === "berhasil") {
-        setShowEdit(false);
-        setOpdEdit(null);
-
-        alert(
-          `Nama OPD berhasil diperbarui!\n\n${result.opd_id} - ${result.nama_opd}`,
-        );
-
-        await fetchOpd();
+      if (
+        config &&
+        typeof config === "object" &&
+        config.senin_masuk_mulai !== undefined
+      ) {
+        setConfigEdit(config);
+        setOpdEdit(opd);
+        setShowEdit(true);
       } else {
-        alert(result?.message || "Gagal memperbarui OPD.");
+        alert(config?.message || "Gagal memuat pengaturan OPD.");
       }
+    } catch (error) {
+      console.error("bukaEdit:", error);
+      alert("Terjadi kesalahan saat memuat pengaturan OPD.");
+    } finally {
+      setLoadingEdit(false);
+    }
+  };
+
+  const handleEditOpd = async ({ opdId, namaOpd, namaBerubah, dataConfig }) => {
+    setSaving(true);
+
+    try {
+      const adaConfig = Object.keys(dataConfig || {}).length > 0;
+
+      // 1) Pengaturan (radius, lokasi, jam sesi) - satu panggilan
+      if (adaConfig) {
+        const hasilConfig = await callApi("updateConfigOpd", {
+          opdId,
+          data: dataConfig,
+          session_token: userData?.session_token,
+        });
+
+        if (hasilConfig?.status !== "berhasil") {
+          alert(hasilConfig?.message || "Gagal menyimpan pengaturan OPD.");
+          return;
+        }
+      }
+
+      // 2) Nama OPD
+      if (namaBerubah) {
+        const hasilNama = await callApi("updateOpd", {
+          opdId,
+          namaOpd,
+          session_token: userData?.session_token,
+        });
+
+        if (hasilNama?.status !== "berhasil") {
+          alert(
+            adaConfig
+              ? `Pengaturan tersimpan, tetapi nama OPD gagal diperbarui: ${
+                  hasilNama?.message || "terjadi kesalahan"
+                }`
+              : hasilNama?.message || "Gagal memperbarui OPD.",
+          );
+
+          if (adaConfig) {
+            await fetchOpd();
+          }
+
+          return;
+        }
+      }
+
+      setShowEdit(false);
+      setOpdEdit(null);
+      setConfigEdit(null);
+
+      alert("Perubahan OPD berhasil disimpan.");
+
+      await fetchOpd();
     } catch (error) {
       console.error("handleEditOpd:", error);
       alert("Terjadi kesalahan saat memperbarui OPD.");
@@ -306,11 +367,9 @@ export default function ManajemenOpd({ callApi, onKembali, userData }) {
 
                     <button
                       type="button"
-                      onClick={() => {
-                        setOpdEdit(opd);
-                        setShowEdit(true);
-                      }}
-                      className="px-3 py-1.5 text-xs font-semibold text-blue-600 transition border border-blue-200 rounded-lg bg-blue-50 hover:bg-blue-100"
+                      onClick={() => bukaEdit(opd)}
+                      disabled={loadingEdit}
+                      className="px-3 py-1.5 text-xs font-semibold text-blue-600 transition border border-blue-200 rounded-lg bg-blue-50 hover:bg-blue-100 disabled:opacity-60"
                     >
                       ✏️ Edit
                     </button>
@@ -368,15 +427,29 @@ export default function ManajemenOpd({ callApi, onKembali, userData }) {
       <EditOpdModal
         visible={showEdit}
         opd={opdEdit}
+        config={configEdit}
         onSimpan={handleEditOpd}
         onBatal={() => {
           if (saving) return;
 
           setShowEdit(false);
           setOpdEdit(null);
+          setConfigEdit(null);
         }}
         saving={saving}
       />
+
+      {loadingEdit && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50">
+          <div className="flex flex-col items-center px-7 py-6 shadow-xl rounded-2xl bg-slate-900/90">
+            <div className="w-9 h-9 border-4 border-white/30 rounded-full animate-spin border-t-white" />
+
+            <p className="mt-3 text-sm font-medium text-white">
+              Memuat pengaturan OPD...
+            </p>
+          </div>
+        </div>
+      )}
 
       {saving && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50">
