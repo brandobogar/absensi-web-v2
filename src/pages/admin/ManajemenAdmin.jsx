@@ -39,8 +39,6 @@ export default function ManajemenAdmin({
         session_token: userData?.session_token,
       });
 
-      console.log("DAFTAR ADMIN:", result);
-
       if (Array.isArray(result)) {
         setAdminList(result);
       } else {
@@ -75,8 +73,6 @@ export default function ManajemenAdmin({
         session_token: userData?.session_token,
       });
 
-      console.log("HASIL TAMBAH ADMIN:", result);
-
       if (result?.status !== "berhasil") {
         alert(result?.message || "Gagal menambahkan admin.");
         return;
@@ -110,7 +106,6 @@ export default function ManajemenAdmin({
         session_token: userData?.session_token,
       });
 
-      console.log("HASIL EDIT ADMIN:", result);
 
       if (result?.status !== "berhasil") {
         alert(result?.message || "Gagal memperbarui admin.");
@@ -145,8 +140,6 @@ export default function ManajemenAdmin({
         passwordBaru,
         session_token: userData?.session_token,
       });
-
-      console.log("HASIL RESET PASSWORD ADMIN:", result);
 
       if (result?.status !== "berhasil") {
         alert(result?.message || "Gagal mereset password admin.");
@@ -195,8 +188,6 @@ export default function ManajemenAdmin({
         status: statusBaru,
         session_token: userData?.session_token,
       });
-
-      console.log("HASIL UPDATE STATUS ADMIN:", result);
 
       if (result?.status !== "berhasil") {
         alert(result?.message || "Gagal mengubah status admin.");

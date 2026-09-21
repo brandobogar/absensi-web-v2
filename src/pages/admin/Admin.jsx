@@ -268,12 +268,6 @@ export default function Admin({
           setExporting(true);
 
           try {
-            console.log("DATA EXPORT:", {
-              opdId,
-              bulan,
-              tahun,
-            });
-
             const result = await callApi("exportRekap", {
               opdId,
               bulan,

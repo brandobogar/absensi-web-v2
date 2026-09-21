@@ -32,8 +32,6 @@ export default function ManajemenOpd({ callApi, onKembali, userData }) {
         session_token: userData?.session_token,
       });
 
-      console.log("DAFTAR OPD:", result);
-
       if (Array.isArray(result)) {
         setOpdList(result);
       } else {
@@ -58,8 +56,6 @@ export default function ManajemenOpd({ callApi, onKembali, userData }) {
         radius,
         session_token: userData?.session_token,
       });
-
-      console.log("HASIL TAMBAH OPD:", result);
 
       if (result?.status === "berhasil") {
         setShowTambah(false);

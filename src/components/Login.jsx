@@ -80,7 +80,6 @@ function Login({ onLoginSuccess }) {
       deviceId = crypto.randomUUID();
       localStorage.setItem("absensi_device_id", deviceId);
     }
-    console.log("DEVICE ID:", deviceId);
 
     return deviceId;
   };

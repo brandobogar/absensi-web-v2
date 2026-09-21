@@ -49,7 +49,6 @@ function Beranda({
         id_pegawai: userData.id_pegawai,
         session_token: userData.session_token,
       });
-      console.log("HASIL getStatusAbsen BERANDA:", res);
       if (res) {
         setStatusAbsen(res);
       }
@@ -72,16 +71,12 @@ function Beranda({
   const loadJamSesi = async () => {
     setLoadingSesi(true);
 
-    console.log("USERDATA BERANDA:", userData);
-    console.log("SESSION TOKEN BERANDA:", userData?.session_token);
-
     try {
       const result = await callApi("getConfig", {
         opdId: userData.opd_id,
         session_token: userData.session_token,
       });
 
-      console.log("HASIL getConfig BERANDA:", result);
 
       if (result) {
         setJamSesi({

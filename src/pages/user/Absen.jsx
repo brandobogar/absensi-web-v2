@@ -118,8 +118,6 @@ function Absen({ userData, onAbsenSuccess }) {
         session_token: userData.session_token,
       });
 
-      console.log("STATUS ABSEN HARI INI:", result);
-
       if (result && result[sesi] && result[sesi] !== "-") {
         setSudahAbsen(true);
         setIsLokasiValid(false);

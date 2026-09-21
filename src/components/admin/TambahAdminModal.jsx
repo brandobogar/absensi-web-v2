@@ -55,11 +55,7 @@ export default function TambahAdminModal({
   };
 
   useEffect(() => {
-    console.log("TambahAdminModal visible:", visible);
-
     if (!visible) return;
-
-    console.log("RESET FORM TAMBAH ADMIN");
 
     setUsername("");
     setPassword("");

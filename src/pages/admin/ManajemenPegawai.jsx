@@ -79,7 +79,6 @@ export default function ManajemenPegawai({
       });
 
       if (Array.isArray(result)) {
-        console.log("DAFTAR OPD:", result);
         setOpdList(result);
       } else {
         alert("Gagal memuat daftar OPD.");
@@ -225,8 +224,6 @@ export default function ManajemenPegawai({
         session_token: userData?.session_token,
       });
 
-      console.log("HASIL TAMBAH PEGAWAI:", result);
-
       if (result?.status === "berhasil") {
         setShowTambah(false);
 
@@ -238,7 +235,6 @@ export default function ManajemenPegawai({
         await fetchPegawai();
       } else {
         alert(result?.message || "Gagal menambahkan pegawai.");
-        console.log("GAGAL TAMBAH PEGAWAI:", result);
       }
     } catch (error) {
       console.error("handleTambahPegawai:", error);
@@ -285,13 +281,6 @@ export default function ManajemenPegawai({
         return;
       }
 
-      console.log("DATA EDIT:", {
-        opdId: targetOpdId,
-        id_pegawai,
-        nama,
-        nip,
-      });
-
       const result = await callApi("updatePegawai", {
         opdId: targetOpdId,
         id_pegawai,
@@ -299,8 +288,6 @@ export default function ManajemenPegawai({
         nip,
         session_token: userData?.session_token,
       });
-
-      console.log("HASIL UPDATE PEGAWAI:", result);
 
       if (result?.status === "berhasil") {
         setPegawaiList((prev) =>
@@ -335,7 +322,6 @@ export default function ManajemenPegawai({
   // RESET PASSWORD
   // ============================================================
   const handleResetPassword = (pegawai) => {
-    console.log("PEGAWAI YANG DIPILIH:", pegawai);
     setPegawaiReset(pegawai);
     setShowResetPassword(true);
   };
@@ -354,8 +340,6 @@ export default function ManajemenPegawai({
         username,
         session_token: userData?.session_token,
       });
-
-      console.log("HASIL RESET PASSWORD:", result);
 
       if (result?.status === "berhasil") {
         setShowResetPassword(false);
