@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { callApi } from "../../api";
+import AbsenStatusModal from "../../components/user/AbsenStatusModal";
 
 function Absen({ userData, onAbsenSuccess }) {
   const [sesiAktif, setSesiAktif] = useState(null);
@@ -15,6 +16,13 @@ function Absen({ userData, onAbsenSuccess }) {
 
   const [loadingGPS, setLoadingGPS] = useState(false);
   const [loadingAbsen, setLoadingAbsen] = useState(false);
+
+  const [absenModal, setAbsenModal] = useState({
+    show: false,
+    type: null,
+    waktu: "",
+    message: "",
+  });
 
   // =========================
   // KONFIGURASI KANTOR
@@ -128,9 +136,12 @@ function Absen({ userData, onAbsenSuccess }) {
           `✅ Anda sudah melakukan absen ${sesi} pada pukul ${result[sesi]}.`,
         );
 
-        window.alert(
-          `Anda sudah melakukan absen ${sesi} pada pukul ${result[sesi]}.`,
-        );
+        setAbsenModal({
+          show: true,
+          type: "already",
+          waktu: result[sesi],
+          message: "",
+        });
       } else {
         setSudahAbsen(false);
 
@@ -303,8 +314,24 @@ function Absen({ userData, onAbsenSuccess }) {
         session_token: userData.session_token,
       });
 
+      // =========================
+      // ABSEN BERHASIL
+      // =========================
+
       if (result && result.status === "APPROVED") {
-        window.alert(`Absen ${sesiAktif} Berhasil Disimpan!`);
+        const sekarang = new Date();
+
+        const waktu = sekarang.toLocaleTimeString("id-ID", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        setAbsenModal({
+          show: true,
+          type: "success",
+          waktu: waktu,
+          message: "",
+        });
 
         if (onAbsenSuccess) {
           onAbsenSuccess();
@@ -313,20 +340,40 @@ function Absen({ userData, onAbsenSuccess }) {
         return;
       }
 
+      // =========================
+      // ABSEN DITOLAK SERVER
+      // =========================
+
       const pesanError =
         result && result.message
           ? result.message
           : "Absensi ditolak atau jarak melebihi batas.";
 
-      window.alert(`Gagal Ditolak\n\n${pesanError}`);
-
       setGpsStatus(`❌ ${pesanError}`);
+
+      setAbsenModal({
+        show: true,
+        type: "rejected",
+        waktu: "",
+        message: pesanError,
+      });
     } catch (error) {
+      // =========================
+      // ERROR TEKNIS / API
+      // =========================
+
       console.error("Gagal menyimpan absensi:", error);
 
-      setGpsStatus("❌ Terjadi kesalahan saat menyimpan absensi.");
+      const pesanError = "Gagal menyimpan absensi. Silakan coba lagi.";
 
-      window.alert("Gagal menyimpan absensi. Silakan coba lagi.");
+      setGpsStatus(`❌ ${pesanError}`);
+
+      setAbsenModal({
+        show: true,
+        type: "error",
+        waktu: "",
+        message: pesanError,
+      });
     } finally {
       setLoadingAbsen(false);
     }
@@ -475,6 +522,23 @@ function Absen({ userData, onAbsenSuccess }) {
           )}
         </div>
       </div>
+      {absenModal.show && (
+        <AbsenStatusModal
+          type={absenModal.type}
+          userData={userData}
+          sesi={sesiAktif}
+          waktu={absenModal.waktu}
+          message={absenModal.message}
+          onClose={() =>
+            setAbsenModal({
+              show: false,
+              type: null,
+              waktu: "",
+              message: "",
+            })
+          }
+        />
+      )}
     </div>
   );
 }
