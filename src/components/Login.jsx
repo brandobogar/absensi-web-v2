@@ -9,7 +9,8 @@ function Login({ onLoginSuccess }) {
 
   const [namaOpd, setNamaOpd] = useState("Instansi");
   const [loadingConfig, setLoadingConfig] = useState(false);
-  
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -32,8 +33,6 @@ function Login({ onLoginSuccess }) {
         password,
         device_id: deviceId,
       });
-
-      
 
       if (adminResult?.status === "berhasil" || adminResult?.status === true) {
         onLoginSuccess({
@@ -161,34 +160,52 @@ function Login({ onLoginSuccess }) {
                 Password
               </label>
 
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Masukkan password"
-                autoComplete="current-password"
-                disabled={loading}
-                className="
-                  w-full
-                  px-4
-                  py-3.5
-                  text-base
-                  text-slate-800
-                  bg-white
-                  border
-                  border-slate-300
-                  rounded-xl
-                  outline-none
-                  transition
-                  placeholder:text-slate-400
-                  focus:border-blue-500
-                  focus:ring-4
-                  focus:ring-blue-100
-                  disabled:bg-slate-100
-                  disabled:cursor-not-allowed
-                "
-              />
+              <div className="space-y-3">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Masukkan password"
+                  autoComplete="current-password"
+                  disabled={loading}
+                  className="
+      w-full
+      px-4
+      py-3.5
+      text-base
+      text-slate-800
+      bg-white
+      border
+      border-slate-300
+      rounded-xl
+      outline-none
+      transition
+      placeholder:text-slate-400
+      focus:border-blue-500
+      focus:ring-4
+      focus:ring-blue-100
+      disabled:bg-slate-100
+      disabled:cursor-not-allowed
+    "
+                />
+
+                <label
+                  htmlFor="show_password"
+                  className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer"
+                >
+                  <input
+                    id="show_password"
+                    type="checkbox"
+                    checked={showPassword}
+                    onChange={(e) => setShowPassword(e.target.checked)}
+                    disabled={loading}
+                    className="w-4 h-4 accent-blue-600"
+                  />
+
+                  <span>Tampilkan password</span>
+                </label>
+              </div>
             </div>
 
             {/* LOGIN BUTTON */}
