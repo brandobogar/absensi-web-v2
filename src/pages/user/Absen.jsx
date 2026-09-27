@@ -32,7 +32,8 @@ function Absen({ userData, onAbsenSuccess }) {
   // CEK HARI
   // =========================
 
-  const isJumat = new Date().getDay() === 5;
+  // const isJumat = new Date().getDay() === 5;
+  const isJumat = true;
 
   // =========================
   // LOAD KONFIGURASI KANTOR
@@ -228,22 +229,16 @@ function Absen({ userData, onAbsenSuccess }) {
         // Radius tetap berlaku.
         // =========================
 
+        setIsLokasiValid(true);
+
         if (isJumat) {
-          setIsLokasiValid(true);
-
-          setGpsStatus(
-            `✅ WFH Jumat. Lokasi tercatat. Jarak: ${roundedDist} meter dari kantor.`,
-          );
+          setGpsStatus(`✅ WFH Jumat. Lokasi tercatat.`);
         } else if (roundedDist <= configKantor.radius) {
-          setIsLokasiValid(true);
-
-          setGpsStatus(
-            `✅ Lokasi Valid! Jarak: ${roundedDist} meter dari kantor.`,
-          );
+          setGpsStatus(`✅ Anda berada dalam radius`);
         } else {
-          setIsLokasiValid(false);
-
-          setGpsStatus(`❌ Di luar area kantor! Jarak: ${roundedDist} meter.`);
+          setGpsStatus(
+            `⚠️ Anda berada di luar radius kantor. Anda tetap bisa mengirim absen; server akan memvalidasi ulang.`,
+          );
         }
 
         setLoadingGPS(false);
@@ -352,7 +347,7 @@ function Absen({ userData, onAbsenSuccess }) {
               <span className="text-3xl">📍</span>
             </div>
 
-            <h1 className="text-xl font-bold text-slate-800">Absensi GPS</h1>
+            <h1 className="text-xl font-bold text-slate-800">Absensi</h1>
 
             <p className="text-sm text-slate-500 mt-1">
               {userData?.nama || "-"}
@@ -360,24 +355,6 @@ function Absen({ userData, onAbsenSuccess }) {
           </div>
 
           {/* INFORMASI WFH JUMAT */}
-
-          {isJumat && (
-            <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-xl">🏠</span>
-                </div>
-
-                <div>
-                  <p className="text-sm font-bold text-amber-700">WFH Jumat</p>
-
-                  <p className="text-xs text-amber-600 mt-0.5">
-                    Lokasi tetap dicatat, tetapi radius kantor tidak berlaku.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* SESI */}
 
@@ -437,24 +414,6 @@ function Absen({ userData, onAbsenSuccess }) {
                 "📍 Check In (Verifikasi GPS)"
               )}
             </button>
-          )}
-
-          {/* JARAK */}
-
-          {jarakMeter && !sudahAbsen && (
-            <div className="mt-4 bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
-              <p className="text-xs text-slate-500">Jarak dari kantor</p>
-
-              <p className="text-lg font-bold text-slate-800 mt-1">
-                {jarakMeter.jarak} meter
-              </p>
-
-              <p className="text-xs text-slate-400 mt-1">
-                {isJumat
-                  ? "WFH Jumat — radius kantor tidak berlaku"
-                  : `Radius yang diizinkan: ${configKantor.radius} meter`}
-              </p>
-            </div>
           )}
 
           {/* TOMBOL KIRIM ABSEN */}

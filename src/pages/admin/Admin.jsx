@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { callApi } from "../../api";
 import ExportRekapModal from "../../components/admin/ExportRekapModal";
+import ProfilOpdModal from "../../components/admin/ProfilOpdModal";
 
 export default function Admin({
   opdId,
@@ -25,6 +26,8 @@ export default function Admin({
 
   const [showExportModal, setShowExportModal] = useState(false);
   const [exporting, setExporting] = useState(false);
+
+  const [showProfilModal, setShowProfilModal] = useState(false);
 
   const fetchAbsensiAdmin = async () => {
     setLoading(true);
@@ -232,6 +235,17 @@ export default function Admin({
             </button>
           )}
 
+          {/* KHUSUS ADMIN OPD: profil untuk tanda tangan rekap */}
+          {!isSuperAdmin && (
+            <button
+              type="button"
+              onClick={() => setShowProfilModal(true)}
+              className="w-full py-3 mb-3 text-sm font-bold text-amber-700 transition border border-amber-200 bg-amber-50 hover:bg-amber-100 rounded-xl"
+            >
+              📋 Profil OPD
+            </button>
+          )}
+
           <button
             type="button"
             onClick={onManajemenPegawai}
@@ -326,6 +340,13 @@ export default function Admin({
             setExporting(false);
           }
         }}
+      />
+
+      <ProfilOpdModal
+        visible={showProfilModal}
+        opdId={opdAktif}
+        userData={userData}
+        onBatal={() => setShowProfilModal(false)}
       />
     </div>
   );
