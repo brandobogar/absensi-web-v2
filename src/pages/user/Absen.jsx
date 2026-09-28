@@ -132,10 +132,6 @@ function Absen({ userData, onAbsenSuccess }) {
         setIsLokasiValid(false);
         setJarakMeter(null);
 
-        setGpsStatus(
-          `✅ Anda sudah melakukan absen ${sesi} pada pukul ${result[sesi]}.`,
-        );
-
         setAbsenModal({
           show: true,
           type: "already",
