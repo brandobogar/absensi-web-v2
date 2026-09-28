@@ -40,8 +40,8 @@ function Absen({ userData, onAbsenSuccess }) {
   // CEK HARI
   // =========================
 
-  // const isJumat = new Date().getDay() === 5;
-  const isJumat = true;
+  const isJumat = new Date().getDay() === 5;
+  // const isJumat = true;
 
   // =========================
   // LOAD KONFIGURASI KANTOR
