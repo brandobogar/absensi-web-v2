@@ -120,7 +120,10 @@ function Absen({ userData, onAbsenSuccess }) {
 
   const cekStatusAbsen = async (sesi) => {
     setLoadingStatus(true);
-
+    // ===== BARU: reset state GPS dari sesi sebelumnya =====
+    setIsLokasiValid(false);
+    setJarakMeter(null);
+    // ===== BARU: selesai =====
     try {
       const result = await callApi("getStatusAbsen", {
         id_pegawai: userData.id_pegawai,
