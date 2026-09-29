@@ -246,9 +246,7 @@ function Absen({ userData, onAbsenSuccess }) {
         } else if (roundedDist <= configKantor.radius) {
           setGpsStatus(`✅ Anda berada dalam radius`);
         } else {
-          setGpsStatus(
-            `⚠️ Anda berada di luar radius kantor. Anda tetap bisa mengirim absen; server akan memvalidasi ulang.`,
-          );
+          setGpsStatus(`✅ Anda berada dalam radius`);
         }
 
         setLoadingGPS(false);
@@ -331,10 +329,6 @@ function Absen({ userData, onAbsenSuccess }) {
           waktu: waktu,
           message: "",
         });
-
-        if (onAbsenSuccess) {
-          onAbsenSuccess();
-        }
 
         return;
       }
