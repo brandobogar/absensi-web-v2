@@ -14,7 +14,7 @@ export default function ManajemenOpd({ callApi, onKembali, userData }) {
   const [opdEdit, setOpdEdit] = useState(null);
   const [configEdit, setConfigEdit] = useState(null);
   const [loadingEdit, setLoadingEdit] = useState(false);
-
+  const [profilEdit, setProfilEdit] = useState(null);
   const [opdAdmin, setOpdAdmin] = useState(null);
 
   // Pencarian
@@ -35,6 +35,7 @@ export default function ManajemenOpd({ callApi, onKembali, userData }) {
       if (Array.isArray(result)) {
         setOpdList(result);
       } else {
+        console.error("getDaftarOpd bukan array:", result);
         alert("Gagal memuat data OPD.");
       }
     } catch (error) {
@@ -45,7 +46,13 @@ export default function ManajemenOpd({ callApi, onKembali, userData }) {
     }
   };
 
-  const handleTambahOpd = async ({ namaOpd, kantorLat, kantorLng, radius }) => {
+  const handleTambahOpd = async ({
+    namaOpd,
+    kantorLat,
+    kantorLng,
+    radius,
+    profil,
+  }) => {
     setSaving(true);
 
     try {
@@ -54,6 +61,7 @@ export default function ManajemenOpd({ callApi, onKembali, userData }) {
         kantorLat,
         kantorLng,
         radius,
+        profil,
         session_token: userData?.session_token,
       });
 
@@ -81,37 +89,60 @@ export default function ManajemenOpd({ callApi, onKembali, userData }) {
     setLoadingEdit(true);
 
     try {
-      const config = await callApi("getConfig", {
-        opdId: opd.opd_id,
-        session_token: userData?.session_token,
-      });
+      const [config, profil] = await Promise.all([
+        callApi("getConfig", {
+          opdId: opd.opd_id,
+          session_token: userData?.session_token,
+        }),
+
+        callApi("getProfilOpd", {
+          opdId: opd.opd_id,
+          session_token: userData?.session_token,
+        }),
+      ]);
 
       if (
-        config &&
-        typeof config === "object" &&
-        config.senin_masuk_mulai !== undefined
+        !config ||
+        typeof config !== "object" ||
+        config.senin_masuk_mulai === undefined
       ) {
-        setConfigEdit(config);
-        setOpdEdit(opd);
-        setShowEdit(true);
-      } else {
         alert(config?.message || "Gagal memuat pengaturan OPD.");
+        return;
       }
+
+      if (!profil || typeof profil !== "object" || profil.status === "gagal") {
+        alert(profil?.message || "Gagal memuat profil OPD.");
+        return;
+      }
+
+      setConfigEdit(config);
+      setProfilEdit(profil);
+      setOpdEdit(opd);
+      setShowEdit(true);
     } catch (error) {
       console.error("bukaEdit:", error);
-      alert("Terjadi kesalahan saat memuat pengaturan OPD.");
+      alert("Terjadi kesalahan saat memuat data OPD.");
     } finally {
       setLoadingEdit(false);
     }
   };
-
-  const handleEditOpd = async ({ opdId, namaOpd, namaBerubah, dataConfig }) => {
+  const handleEditOpd = async ({
+    opdId,
+    namaOpd,
+    namaBerubah,
+    dataConfig,
+    dataProfil,
+  }) => {
     setSaving(true);
 
     try {
       const adaConfig = Object.keys(dataConfig || {}).length > 0;
+      const adaProfil = Object.keys(dataProfil || {}).length > 0;
 
-      // 1) Pengaturan (radius, lokasi, jam sesi) - satu panggilan
+      // ==========================================================
+      // 1) PENGATURAN OPD
+      //    Radius, lokasi kantor, dan jam sesi
+      // ==========================================================
       if (adaConfig) {
         const hasilConfig = await callApi("updateConfigOpd", {
           opdId,
@@ -125,7 +156,9 @@ export default function ManajemenOpd({ callApi, onKembali, userData }) {
         }
       }
 
-      // 2) Nama OPD
+      // ==========================================================
+      // 2) NAMA OPD
+      // ==========================================================
       if (namaBerubah) {
         const hasilNama = await callApi("updateOpd", {
           opdId,
@@ -150,9 +183,40 @@ export default function ManajemenOpd({ callApi, onKembali, userData }) {
         }
       }
 
+      // ==========================================================
+      // 3) PROFIL PIMPINAN
+      // ==========================================================
+      if (adaProfil) {
+        const hasilProfil = await callApi("updateProfilOpd", {
+          opdId,
+          data: dataProfil,
+          session_token: userData?.session_token,
+        });
+
+        if (hasilProfil?.status !== "berhasil") {
+          alert(
+            `Pengaturan${
+              namaBerubah ? " dan nama OPD" : ""
+            } tersimpan, tetapi profil pimpinan gagal diperbarui: ${
+              hasilProfil?.message || "terjadi kesalahan"
+            }`,
+          );
+
+          if (adaConfig || namaBerubah) {
+            await fetchOpd();
+          }
+
+          return;
+        }
+      }
+
+      // ==========================================================
+      // 4) BERHASIL
+      // ==========================================================
       setShowEdit(false);
       setOpdEdit(null);
       setConfigEdit(null);
+      setProfilEdit(null);
 
       alert("Perubahan OPD berhasil disimpan.");
 
@@ -425,9 +489,10 @@ export default function ManajemenOpd({ callApi, onKembali, userData }) {
         opd={opdEdit}
         config={configEdit}
         onSimpan={handleEditOpd}
+        profil={profilEdit}
         onBatal={() => {
           if (saving) return;
-
+          setProfilEdit(null);
           setShowEdit(false);
           setOpdEdit(null);
           setConfigEdit(null);

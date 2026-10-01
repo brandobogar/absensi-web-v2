@@ -14,7 +14,7 @@ import { callApi } from "../../api";
 //   onBatal  : () => void, dipanggil setelah simpan berhasil juga
 // ============================================================
 export default function ProfilOpdModal({ visible, opdId, userData, onBatal }) {
-  const [kota, setKota] = useState("");
+  const [lokasi, setLokasi] = useState("");
   const [jabatan, setJabatan] = useState("");
   const [namaPimpinan, setNamaPimpinan] = useState("");
   const [pangkat, setPangkat] = useState("");
@@ -22,6 +22,54 @@ export default function ProfilOpdModal({ visible, opdId, userData, onBatal }) {
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // ==========================================================
+  // PILIHAN JABATAN
+  // ==========================================================
+  const pilihanJabatan = [
+    "Kepala Dinas",
+    "Kepala Badan",
+    "Inspektur Daerah",
+    "Kepala Satuan",
+    "Kepala Pelaksana",
+  ];
+
+  // ==========================================================
+  // PILIHAN PANGKAT / GOLONGAN
+  // ==========================================================
+  const pilihanPangkat = [
+    "Penata Tk. I/III-d",
+    "Pembina/IV-a",
+    "Pembina Tk. I/IV-b",
+    "Pembina Utama Muda/IV-c",
+    "Pembina Utama Madya/IV-d",
+    "Pembina Utama/IV-e",
+  ];
+
+  // ==========================================================
+  // FORMAT NIP
+  // Format: 19971010 202506 1 004
+  // ==========================================================
+  const formatNip = (value) => {
+    const angka = value.replace(/\D/g, "").slice(0, 18);
+
+    if (angka.length <= 8) {
+      return angka;
+    }
+
+    if (angka.length <= 14) {
+      return `${angka.slice(0, 8)} ${angka.slice(8)}`;
+    }
+
+    if (angka.length <= 15) {
+      return `${angka.slice(0, 8)} ${angka.slice(8, 14)} ${angka.slice(14)}`;
+    }
+
+    return `${angka.slice(0, 8)} ${angka.slice(8, 14)} ${angka.slice(
+      14,
+      15,
+    )} ${angka.slice(15, 18)}`;
+  };
 
   // ==========================================================
   // MUAT PROFIL SAAT MODAL DIBUKA
@@ -41,7 +89,7 @@ export default function ProfilOpdModal({ visible, opdId, userData, onBatal }) {
         });
 
         if (!batal && result && !result.status) {
-          setKota(result.kota || "");
+          setLokasi(result.lokasi || "");
           setJabatan(result.jabatan || "");
           setNamaPimpinan(result.nama_pimpinan || "");
           setPangkat(result.pangkat || "");
@@ -51,9 +99,14 @@ export default function ProfilOpdModal({ visible, opdId, userData, onBatal }) {
         }
       } catch (error) {
         console.error("Muat profil OPD:", error);
-        if (!batal) alert("Terjadi kesalahan saat memuat profil OPD.");
+
+        if (!batal) {
+          alert("Terjadi kesalahan saat memuat profil OPD.");
+        }
       } finally {
-        if (!batal) setLoading(false);
+        if (!batal) {
+          setLoading(false);
+        }
       }
     };
 
@@ -62,6 +115,7 @@ export default function ProfilOpdModal({ visible, opdId, userData, onBatal }) {
     return () => {
       batal = true;
     };
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, opdId]);
 
@@ -69,17 +123,52 @@ export default function ProfilOpdModal({ visible, opdId, userData, onBatal }) {
   // SIMPAN
   // ==========================================================
   const handleSimpan = async () => {
+    const lokasiBersih = lokasi.trim();
+    const jabatanBersih = jabatan.trim();
+    const namaPimpinanBersih = namaPimpinan.trim();
+    const pangkatBersih = pangkat.trim();
+    const nipBersih = nip.replace(/\D/g, "");
+
+    // --------------------------------------------------------
+    // VALIDASI
+    // --------------------------------------------------------
+
+    if (!lokasiBersih) {
+      alert("Lokasi wajib diisi.");
+      return;
+    }
+
+    if (!jabatanBersih) {
+      alert("Jabatan pimpinan wajib dipilih.");
+      return;
+    }
+
+    if (!namaPimpinanBersih) {
+      alert("Nama pimpinan wajib diisi.");
+      return;
+    }
+
+    if (!pangkatBersih) {
+      alert("Pangkat / Golongan wajib dipilih.");
+      return;
+    }
+
+    if (nipBersih.length !== 18) {
+      alert("NIP harus terdiri dari 18 digit.");
+      return;
+    }
+
     setSaving(true);
 
     try {
       const result = await callApi("updateProfilOpd", {
         opdId,
         data: {
-          kota: kota.trim(),
-          jabatan: jabatan.trim(),
-          nama_pimpinan: namaPimpinan.trim(),
-          pangkat: pangkat.trim(),
-          nip: nip.trim(),
+          lokasi: lokasiBersih,
+          jabatan: jabatanBersih,
+          nama_pimpinan: namaPimpinanBersih,
+          pangkat: pangkatBersih,
+          nip: formatNip(nipBersih),
         },
         session_token: userData?.session_token,
       });
@@ -112,44 +201,57 @@ export default function ProfilOpdModal({ visible, opdId, userData, onBatal }) {
             Profil OPD
           </h2>
 
-         
-
           {loading ? (
             <p className="py-6 text-sm text-center text-slate-400">
               Memuat profil...
             </p>
           ) : (
             <>
+              {/* ==================================================
+                  LOKASI
+                  ================================================== */}
               <div className="mb-4">
                 <label className="block mb-1.5 text-[13px] font-medium text-slate-700">
-                  Kota
+                  Lokasi
                 </label>
 
                 <input
                   type="text"
-                  value={kota}
-                  onChange={(e) => setKota(e.target.value)}
+                  value={lokasi}
+                  onChange={(e) => setLokasi(e.target.value)}
                   placeholder="Contoh: Tahuna"
                   disabled={disabled}
                   className="w-full px-3 py-3 text-sm border outline-none bg-slate-50 border-slate-300 rounded-[10px] text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
                 />
               </div>
 
+              {/* ==================================================
+                  JABATAN PIMPINAN
+                  ================================================== */}
               <div className="mb-4">
                 <label className="block mb-1.5 text-[13px] font-medium text-slate-700">
                   Jabatan Pimpinan
                 </label>
 
-                <input
-                  type="text"
+                <select
                   value={jabatan}
                   onChange={(e) => setJabatan(e.target.value)}
-                  placeholder="Contoh: Kepala Dinas Kesehatan"
                   disabled={disabled}
                   className="w-full px-3 py-3 text-sm border outline-none bg-slate-50 border-slate-300 rounded-[10px] text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
-                />
+                >
+                  <option value="">Pilih jabatan</option>
+
+                  {pilihanJabatan.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
               </div>
 
+              {/* ==================================================
+                  NAMA PIMPINAN
+                  ================================================== */}
               <div className="mb-4">
                 <label className="block mb-1.5 text-[13px] font-medium text-slate-700">
                   Nama Pimpinan
@@ -165,21 +267,33 @@ export default function ProfilOpdModal({ visible, opdId, userData, onBatal }) {
                 />
               </div>
 
+              {/* ==================================================
+                  PANGKAT / GOLONGAN
+                  ================================================== */}
               <div className="mb-4">
                 <label className="block mb-1.5 text-[13px] font-medium text-slate-700">
                   Pangkat / Golongan
                 </label>
 
-                <input
-                  type="text"
+                <select
                   value={pangkat}
                   onChange={(e) => setPangkat(e.target.value)}
-                  placeholder="Contoh: Pembina / IV-a"
                   disabled={disabled}
                   className="w-full px-3 py-3 text-sm border outline-none bg-slate-50 border-slate-300 rounded-[10px] text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
-                />
+                >
+                  <option value="">Pilih pangkat / golongan</option>
+
+                  {pilihanPangkat.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
               </div>
 
+              {/* ==================================================
+                  NIP
+                  ================================================== */}
               <div className="mb-5">
                 <label className="block mb-1.5 text-[13px] font-medium text-slate-700">
                   NIP
@@ -187,8 +301,9 @@ export default function ProfilOpdModal({ visible, opdId, userData, onBatal }) {
 
                 <input
                   type="text"
+                  inputMode="numeric"
                   value={nip}
-                  onChange={(e) => setNip(e.target.value)}
+                  onChange={(e) => setNip(formatNip(e.target.value))}
                   placeholder="Contoh: 19700101 199001 1 001"
                   disabled={disabled}
                   className="w-full px-3 py-3 text-sm border outline-none bg-slate-50 border-slate-300 rounded-[10px] text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
@@ -197,6 +312,9 @@ export default function ProfilOpdModal({ visible, opdId, userData, onBatal }) {
             </>
           )}
 
+          {/* ====================================================
+              TOMBOL
+              ==================================================== */}
           <div className="flex gap-3">
             <button
               type="button"

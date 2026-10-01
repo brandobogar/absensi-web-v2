@@ -49,6 +49,24 @@ const KUNCI_SESI = DAFTAR_SESI.flatMap((s) => [s.mulai, s.selesai]);
 
 const HARI_SESI = ["Senin - Kamis", "Jumat"];
 
+const PILIHAN_JABATAN = [
+  "Sekretaris Daerah",
+  "Kepala Dinas",
+  "Kepala Badan",
+  "Inspektur Daerah",
+  "Kepala Satuan",
+  "Kepala Pelaksana",
+];
+
+const PILIHAN_PANGKAT = [
+  "Penata Tingkat I/III-d",
+  "Pembina/IV-a",
+  "Pembina Tingkat I/IV-b",
+  "Pembina Utama Muda/IV-c",
+  "Pembina Utama Madya/IV-d",
+  "Pembina Utama/IV-e",
+];
+
 // ============================================================
 // TOTAL MENIT -> "HH:MM"
 // ============================================================
@@ -103,10 +121,32 @@ const bacaSesi = (config) => {
 //   onBatal  : () => void
 //   saving   : true saat proses simpan berjalan
 // ============================================================
+const formatNip = (value) => {
+  const angka = value.replace(/\D/g, "").slice(0, 18);
+
+  if (angka.length <= 8) {
+    return angka;
+  }
+
+  if (angka.length <= 14) {
+    return `${angka.slice(0, 8)} ${angka.slice(8)}`;
+  }
+
+  if (angka.length <= 15) {
+    return `${angka.slice(0, 8)} ${angka.slice(8, 14)} ${angka.slice(14)}`;
+  }
+
+  return `${angka.slice(0, 8)} ${angka.slice(8, 14)} ${angka.slice(
+    14,
+    15,
+  )} ${angka.slice(15, 18)}`;
+};
+
 export default function EditOpdModal({
   visible,
   opd,
   config,
+  profil,
   onSimpan,
   onBatal,
   saving,
@@ -115,6 +155,12 @@ export default function EditOpdModal({
   const [radius, setRadius] = useState("");
   const [koordinat, setKoordinat] = useState(null);
   const [sesi, setSesi] = useState({});
+
+  const [lokasi, setLokasi] = useState("");
+  const [jabatan, setJabatan] = useState("");
+  const [namaPimpinan, setNamaPimpinan] = useState("");
+  const [pangkat, setPangkat] = useState("");
+  const [nip, setNip] = useState("");
 
   const [showPeta, setShowPeta] = useState(false);
 
@@ -136,6 +182,12 @@ export default function EditOpdModal({
     setKoordinat(bacaKoordinat(opd));
     setSesi(bacaSesi(config));
 
+    setLokasi(profil?.lokasi || "");
+    setJabatan(profil?.jabatan || "");
+    setNamaPimpinan(profil?.nama_pimpinan || "");
+    setPangkat(profil?.pangkat || "");
+    setNip(profil?.nip || "");
+
     setShowPeta(false);
     setModalSesi({
       visible: false,
@@ -143,7 +195,7 @@ export default function EditOpdModal({
       keyMulai: "",
       keySelesai: "",
     });
-  }, [visible, opd, config]);
+  }, [visible, opd, config, profil]);
 
   // ==========================================================
   // HASIL DARI PETA
@@ -198,6 +250,16 @@ export default function EditOpdModal({
     const nama = namaOpd.trim();
     const nilaiRadius = Number(radius);
 
+    const lokasiBersih = lokasi.trim();
+    const jabatanBersih = jabatan.trim();
+    const namaPimpinanBersih = namaPimpinan.trim();
+    const pangkatBersih = pangkat.trim();
+    const nipBersih = nip.replace(/\D/g, "");
+
+    // ==========================================================
+    // VALIDASI DATA OPD
+    // ==========================================================
+
     if (!nama) {
       alert("Nama OPD wajib diisi.");
       return;
@@ -218,7 +280,39 @@ export default function EditOpdModal({
       return;
     }
 
-    // Hanya kirim kolom yang benar-benar berubah
+    // ==========================================================
+    // VALIDASI PROFIL PIMPINAN
+    // ==========================================================
+
+    if (!lokasiBersih) {
+      alert("Lokasi wajib diisi.");
+      return;
+    }
+
+    if (!jabatanBersih) {
+      alert("Jabatan pimpinan wajib dipilih.");
+      return;
+    }
+
+    if (!namaPimpinanBersih) {
+      alert("Nama pimpinan wajib diisi.");
+      return;
+    }
+
+    if (!pangkatBersih) {
+      alert("Pangkat / Golongan wajib dipilih.");
+      return;
+    }
+
+    if (nipBersih.length !== 18) {
+      alert("NIP harus terdiri dari 18 digit.");
+      return;
+    }
+
+    // ==========================================================
+    // DATA CONFIG YANG BERUBAH
+    // ==========================================================
+
     const dataConfig = {};
 
     if (nilaiRadius !== Number(opd?.radius)) {
@@ -239,19 +333,63 @@ export default function EditOpdModal({
       }
     });
 
+    // ==========================================================
+    // DATA PROFIL YANG BERUBAH
+    // ==========================================================
+
+    const dataProfil = {};
+
+    if (lokasiBersih !== String(profil?.lokasi || "").trim()) {
+      dataProfil.lokasi = lokasiBersih;
+    }
+
+    if (jabatanBersih !== String(profil?.jabatan || "").trim()) {
+      dataProfil.jabatan = jabatanBersih;
+    }
+
+    if (namaPimpinanBersih !== String(profil?.nama_pimpinan || "").trim()) {
+      dataProfil.nama_pimpinan = namaPimpinanBersih;
+    }
+
+    if (pangkatBersih !== String(profil?.pangkat || "").trim()) {
+      dataProfil.pangkat = pangkatBersih;
+    }
+
+    const nipLama = String(profil?.nip || "").replace(/\D/g, "");
+
+    if (nipBersih !== nipLama) {
+      dataProfil.nip = formatNip(nipBersih);
+    }
+
+    // ==========================================================
+    // NAMA OPD
+    // ==========================================================
+
     const namaBerubah = nama !== String(opd?.nama_opd || "").trim();
 
-    // Tidak ada yang berubah: tutup saja
-    if (!namaBerubah && Object.keys(dataConfig).length === 0) {
+    const adaConfig = Object.keys(dataConfig).length > 0;
+
+    const adaProfil = Object.keys(dataProfil).length > 0;
+
+    // ==========================================================
+    // TIDAK ADA PERUBAHAN
+    // ==========================================================
+
+    if (!namaBerubah && !adaConfig && !adaProfil) {
       onBatal();
       return;
     }
+
+    // ==========================================================
+    // KIRIM KE PARENT
+    // ==========================================================
 
     onSimpan({
       opdId: opd?.opd_id,
       namaOpd: nama,
       namaBerubah,
       dataConfig,
+      dataProfil,
     });
   };
 
@@ -303,6 +441,99 @@ export default function EditOpdModal({
                 disabled={saving}
                 className="w-full px-3 py-3 text-sm border outline-none bg-slate-50 border-slate-300 rounded-[10px] text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
               />
+            </div>
+            <div className="pt-4 mb-5 border-t border-slate-100">
+              <p className="mb-4 text-sm font-bold text-slate-700">
+                Profil Pimpinan
+              </p>
+
+              <div className="mb-4">
+                <label className="block mb-1.5 text-[13px] font-medium text-slate-700">
+                  Lokasi
+                </label>
+
+                <input
+                  type="text"
+                  value={lokasi}
+                  onChange={(e) => setLokasi(e.target.value)}
+                  placeholder="Contoh: Tahuna"
+                  disabled={saving}
+                  className="w-full px-3 py-3 text-sm border outline-none bg-slate-50 border-slate-300 rounded-[10px] text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block mb-1.5 text-[13px] font-medium text-slate-700">
+                  Jabatan Pimpinan
+                </label>
+
+                <select
+                  value={jabatan}
+                  onChange={(e) => setJabatan(e.target.value)}
+                  disabled={saving}
+                  className="w-full px-3 py-3 text-sm border outline-none bg-slate-50 border-slate-300 rounded-[10px] text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+                >
+                  <option value="">Pilih jabatan</option>
+
+                  {PILIHAN_JABATAN.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="mb-4">
+                <label className="block mb-1.5 text-[13px] font-medium text-slate-700">
+                  Nama Pimpinan
+                </label>
+
+                <input
+                  type="text"
+                  value={namaPimpinan}
+                  onChange={(e) => setNamaPimpinan(e.target.value)}
+                  placeholder="Nama lengkap"
+                  disabled={saving}
+                  className="w-full px-3 py-3 text-sm border outline-none bg-slate-50 border-slate-300 rounded-[10px] text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block mb-1.5 text-[13px] font-medium text-slate-700">
+                  Pangkat / Golongan
+                </label>
+
+                <select
+                  value={pangkat}
+                  onChange={(e) => setPangkat(e.target.value)}
+                  disabled={saving}
+                  className="w-full px-3 py-3 text-sm border outline-none bg-slate-50 border-slate-300 rounded-[10px] text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+                >
+                  <option value="">Pilih pangkat / golongan</option>
+
+                  {PILIHAN_PANGKAT.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block mb-1.5 text-[13px] font-medium text-slate-700">
+                  NIP
+                </label>
+
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={nip}
+                  onChange={(e) => setNip(formatNip(e.target.value))}
+                  placeholder="Contoh: 19700101 199001 1 001"
+                  disabled={saving}
+                  className="w-full px-3 py-3 text-sm border outline-none bg-slate-50 border-slate-300 rounded-[10px] text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+                />
+              </div>
             </div>
 
             {/* LOKASI */}
