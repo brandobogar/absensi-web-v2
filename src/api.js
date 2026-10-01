@@ -1,5 +1,4 @@
-const API_URL =
-  "https://script.google.com/macros/s/AKfycbwwL139UAZwQ0yuQTAaEv9SKRskDimsX4QRfRNAnqfqdnTookMW-aKN1R3eH7GdFmJ55A/exec";
+const API_URL = import.meta.env.VITE_API_URL;
 
 export async function callApi(action, data = {}) {
   try {
